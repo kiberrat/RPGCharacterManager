@@ -28,6 +28,9 @@ public sealed class CoreShellContributor : IShellContributor
     /// <summary>Идентификатор документа обратной связи.</summary>
     public const string FeedbackDocumentId = DocumentIds.Feedback;
 
+    /// <summary>Идентификатор документа встроенных мини-игр.</summary>
+    public const string QuietTimeDocumentId = DocumentIds.QuietTime;
+
     /// <summary>Идентификатор документа управления резервными копиями.</summary>
     public const string BackupsDocumentId = DocumentIds.Backups;
 
@@ -83,6 +86,10 @@ public sealed class CoreShellContributor : IShellContributor
             FeedbackDocumentId,
             "Обратная связь");
 
+        yield return new DocumentDescriptor<ViewModels.Documents.QuietTimeViewModel>(
+            QuietTimeDocumentId,
+            "Тишину навели");
+
         yield return new DocumentDescriptor<ViewModels.Documents.BackupsViewModel>(
             BackupsDocumentId,
             "Резервные копии");
@@ -137,6 +144,11 @@ public sealed class CoreShellContributor : IShellContributor
         {
             Order = 910,
             IconKey = "ЗначокОбратнаяСвязь",
+        };
+        yield return new NavigationItemContribution("nav.quietTime", "Тишину навели", QuietTimeDocumentId)
+        {
+            Order = 920,
+            IconKey = "ЗначокМиниИгры",
         };
     }
 

@@ -19,6 +19,9 @@ public static class DocumentIds
     /// <summary>Обратная связь с разработчиком.</summary>
     public const string Feedback = "core.feedback";
 
+    /// <summary>Встроенные мини-игры.</summary>
+    public const string QuietTime = "core.quiet-time";
+
     /// <summary>Резервные копии.</summary>
     public const string Backups = "core.backups";
 
