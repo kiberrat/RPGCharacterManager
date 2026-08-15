@@ -1,0 +1,6 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:games="clr-namespace:RPGCharacterManager.UI.Views.Documents.Games"
+             x:Class="RPGCharacterManager.UI.Views.Documents.QuietTimeView">
+  <games:ArcadeHub Margin="{DynamicResource AppDocumentPadding}" />
+</UserControl>
