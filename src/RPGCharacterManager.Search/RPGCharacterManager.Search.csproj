@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Глобальный поиск.
+
+    Подсистема не обращается к базе данных и ничего о её устройстве не знает:
+    находки дают сами подсистемы через свои службы. Поэтому поиск охватывает
+    все виды контента сразу и получает новый вид без единой правки.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Search</RootNamespace>
+    <Description>Глобальный поиск по контенту, персонажам, кампаниям и журналу.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

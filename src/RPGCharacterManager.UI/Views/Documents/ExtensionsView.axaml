@@ -1,0 +1,225 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:ext="clr-namespace:RPGCharacterManager.Core.Abstractions.Extensions;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.ExtensionsView"
+             x:DataType="vm:ExtensionsViewModel">
+
+  <UserControl.Styles>
+    <!-- Состояние расширения: цвет отвечает на вопрос «работает ли оно». -->
+    <Style Selector="Border.Состояние">
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="8,2" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Background" Value="{DynamicResource AppSurfaceHoverBrush}" />
+    </Style>
+
+    <Style Selector="Border.Состояние.Работает">
+      <Setter Property="Background" Value="{DynamicResource AppSuccessBrush}" />
+    </Style>
+
+    <Style Selector="Border.Состояние.Мешает">
+      <Setter Property="Background" Value="{DynamicResource AppDangerBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel>
+
+    <StackPanel DockPanel.Dock="Top" Margin="{DynamicResource AppDocumentPadding}" Spacing="14">
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Расширения" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   Text="Плагин, контент-пак и игровая система — это один и тот же файл .rpgpack: набор объектов приложения. Расширение не содержит программы и не может сделать ничего, чего не можете вы сами в этом приложении." />
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="Установить из файла…" Command="{Binding InstallCommand}" />
+        <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+
+        <TextBlock Text="{Binding Summary}"
+                   Classes="Вторичный"
+                   VerticalAlignment="Center"
+                   Margin="6,0,0,0" />
+      </StackPanel>
+    </StackPanel>
+
+    <Grid Margin="28,0,28,20" ColumnDefinitions="*,16,380">
+
+      <!-- ===================== Установленные расширения ===================== -->
+      <Border Grid.Column="0" Classes="Карточка" Padding="0">
+        <Panel>
+          <StackPanel IsVisible="{Binding IsEmpty}"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center"
+                      Spacing="6"
+                      Margin="20">
+            <TextBlock Text="Расширений нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       MaxWidth="440"
+                       Text="Установите файл .rpgpack — или соберите своё расширение справа из игровой системы, которую вы уже сделали." />
+          </StackPanel>
+
+          <ScrollViewer IsVisible="{Binding !IsEmpty}">
+            <ItemsControl ItemsSource="{Binding Items}" Margin="10">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ext:ExtensionItem">
+                  <Border Classes="Карточка" Margin="0,0,0,8" Padding="14">
+                    <StackPanel Spacing="8">
+
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                          <TextBlock Text="{Binding Manifest.Name}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding Manifest.Version}" Classes="Вторичный" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <Border Grid.Column="1"
+                                Classes="Состояние"
+                                Classes.Работает="{Binding IsActive}"
+                                Classes.Мешает="{Binding HasProblems}">
+                          <TextBlock Text="{Binding StateText}" FontSize="11" />
+                        </Border>
+                      </Grid>
+
+                      <TextBlock Text="{Binding Manifest.Description}"
+                                 Classes="Вторичный"
+                                 TextWrapping="Wrap"
+                                 IsVisible="{Binding Manifest.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                      <WrapPanel>
+                        <TextBlock Classes="Вторичный" Margin="0,0,14,0"
+                                   IsVisible="{Binding Manifest.Author, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <Run Text="автор:" />
+                          <Run Text="{Binding Manifest.Author}" />
+                        </TextBlock>
+
+                        <TextBlock Classes="Вторичный" Margin="0,0,14,0"
+                                   IsVisible="{Binding Manifest.GameSystem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <Run Text="система:" />
+                          <Run Text="{Binding Manifest.GameSystem}" />
+                        </TextBlock>
+
+                        <TextBlock Classes="Вторичный" Margin="0,0,14,0"
+                                   IsVisible="{Binding Manifest.License, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <Run Text="лицензия:" />
+                          <Run Text="{Binding Manifest.License}" />
+                        </TextBlock>
+
+                        <TextBlock Text="{Binding Summary}" Classes="Вторичный" />
+                      </WrapPanel>
+
+                      <ItemsControl ItemsSource="{Binding Problems}" IsVisible="{Binding HasProblems}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{Binding}"
+                                       Foreground="{DynamicResource AppDangerBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,1" />
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="Включить"
+                                IsVisible="{Binding !IsEnabled}"
+                                Command="{Binding $parent[UserControl].((vm:ExtensionsViewModel)DataContext).ToggleCommand}"
+                                CommandParameter="{Binding}" />
+
+                        <Button Content="Отключить"
+                                IsVisible="{Binding IsEnabled}"
+                                Command="{Binding $parent[UserControl].((vm:ExtensionsViewModel)DataContext).ToggleCommand}"
+                                CommandParameter="{Binding}" />
+
+                        <Button Content="Удалить"
+                                Classes="Опасная"
+                                Command="{Binding $parent[UserControl].((vm:ExtensionsViewModel)DataContext).RemoveCommand}"
+                                CommandParameter="{Binding}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Panel>
+      </Border>
+
+      <!-- ===================== Выгрузка своего расширения ===================== -->
+      <Border Grid.Column="2" Classes="Карточка">
+        <ScrollViewer>
+          <StackPanel Spacing="10">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Выгрузить своё" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="Игровая система вместе со всем её содержимым, правилами и макросами станет файлом, который можно передать другому." />
+            </StackPanel>
+
+            <StackPanel Spacing="4" IsVisible="{Binding !HasSources}">
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="Выгружать нечего: создайте игровую систему в разделе «Контент»." />
+            </StackPanel>
+
+            <StackPanel Spacing="10" IsVisible="{Binding HasSources}">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Что выгрузить" Classes="Вторичный" />
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding Sources}"
+                          SelectedItem="{Binding SelectedSource}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="ext:ExtensionSource">
+                      <TextBlock Text="{Binding Title}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Название" Classes="Вторичный" />
+                <TextBox Text="{Binding ExportName}" Watermark="Тёмное фэнтези" />
+              </StackPanel>
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Версия" Classes="Вторичный" />
+                <TextBox Text="{Binding ExportVersion}" Watermark="1.0" />
+              </StackPanel>
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Автор" Classes="Вторичный" />
+                <TextBox Text="{Binding ExportAuthor}" Watermark="Ваше имя" />
+              </StackPanel>
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Описание" Classes="Вторичный" />
+                <TextBox Text="{Binding ExportDescription}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         Height="70"
+                         Watermark="Что внутри" />
+              </StackPanel>
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Лицензия" Classes="Вторичный" />
+                <TextBox Text="{Binding ExportLicense}" Watermark="Например: свободное использование" />
+              </StackPanel>
+
+              <Button Content="Выгрузить в файл…"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center"
+                      Command="{Binding ExportCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+  </DockPanel>
+
+</UserControl>

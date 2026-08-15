@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.CustomFieldsPanelView"
+             x:DataType="charactersVm:SheetPanelViewModel">
+
+  <!-- пользовательские поля. -->
+  <Panel DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel">
+  <DockPanel Margin="0,10,0,0">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Content="Создать поле" Command="{Binding ToggleCustomFieldEditorCommand}" />
+        <TextBlock Classes="Вторичный" VerticalAlignment="Center"
+                   Text="Поле добавляется всем персонажам и не изменяет структуру базы данных." />
+      </StackPanel>
+
+      <Border Classes="Карточка" IsVisible="{Binding IsCustomFieldEditorOpen}">
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Название" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding NewFieldName}" />
+          </Grid>
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Тип" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding FieldTypes}"
+                      SelectedItem="{Binding NewFieldType}"
+                      HorizontalAlignment="Stretch">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:CustomFieldTypeOption">
+                  <TextBlock Text="{Binding DisplayName}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </Grid>
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Раздел" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding NewFieldCategory}"
+                     Watermark="например: Домашние правила" />
+          </Grid>
+          <Button Content="Создать"
+                  Command="{Binding CreateCustomFieldCommand}"
+                  HorizontalAlignment="Left"
+                  Classes="Основная" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <Border Classes="Карточка">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     IsVisible="{Binding HasNoCustomFields}"
+                     Text="Своих полей нет. Создайте поле, если вашей игре нужен параметр, которого нет в приложении: честь, голод, радиация, энергия костюма." />
+
+          <ItemsControl ItemsSource="{Binding CustomFields}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:SheetCustomFieldRowViewModel">
+                <Grid ColumnDefinitions="220,*,Auto" Margin="0,4">
+                  <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                    <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Description}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding HasDescription}" />
+                  </StackPanel>
+
+                  <StackPanel Grid.Column="1" Spacing="3">
+                    <TextBox Text="{Binding Text}" IsVisible="{Binding IsText}" />
+                    <TextBox Text="{Binding Text}"
+                             IsVisible="{Binding IsLongText}"
+                             AcceptsReturn="True"
+                             MinHeight="90"
+                             TextWrapping="Wrap" />
+                    <ToggleSwitch IsChecked="{Binding BooleanValue}"
+                                  IsVisible="{Binding IsBoolean}"
+                                  OnContent="да"
+                                  OffContent="нет" />
+                  </StackPanel>
+
+                  <Button Grid.Column="2"
+                          Content="Удалить поле"
+                          Margin="10,0,0,0"
+                          VerticalAlignment="Center"
+                          Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.DeleteCustomFieldCommand}"
+                          CommandParameter="{Binding}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </DockPanel>
+  </Panel>
+</UserControl>

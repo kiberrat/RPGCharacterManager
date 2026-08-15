@@ -1,0 +1,83 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Dialogs"
+        mc:Ignorable="d"
+        x:Class="RPGCharacterManager.UI.Views.Dialogs.MessageDialogWindow"
+        x:DataType="vm:MessageDialogViewModel"
+        Title="{Binding Title}"
+        Width="480"
+        SizeToContent="Height"
+        MinHeight="180"
+        MaxHeight="640"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppWindowBrush}"
+        FontSize="{DynamicResource AppFontSize}">
+
+  <Window.Styles>
+    <!-- Цветовая метка слева от заголовка отражает назначение окна. -->
+    <Style Selector="Border.Метка">
+      <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    </Style>
+    <Style Selector="Border.Метка.Ошибка">
+      <Setter Property="Background" Value="{DynamicResource AppDangerBrush}" />
+    </Style>
+    <Style Selector="Border.Метка.Подтверждение">
+      <Setter Property="Background" Value="{DynamicResource AppWarningBrush}" />
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="{DynamicResource AppPaddingLarge}">
+
+    <!-- Заголовок с цветовой меткой назначения окна -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
+      <Border Width="4"
+              CornerRadius="2"
+              Classes="Метка"
+              Classes.Ошибка="{Binding IsError}"
+              Classes.Подтверждение="{Binding IsConfirmation}" />
+      <TextBlock Text="{Binding Title}"
+                 Classes="Подзаголовок"
+                 VerticalAlignment="Center"
+                 TextWrapping="Wrap" />
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="10">
+        <TextBlock Text="{Binding Message}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource AppTextPrimaryBrush}" />
+
+        <Expander Header="Технические подробности"
+                  IsVisible="{Binding HasDetails}"
+                  IsExpanded="{Binding AreDetailsExpanded}">
+          <SelectableTextBlock Text="{Binding Details}"
+                               TextWrapping="Wrap"
+                               FontFamily="Consolas,Courier New,monospace"
+                               FontSize="{DynamicResource AppFontSizeSmall}"
+                               Foreground="{DynamicResource AppTextSecondaryBrush}" />
+        </Expander>
+      </StackPanel>
+    </ScrollViewer>
+
+    <StackPanel Grid.Row="2"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                Spacing="8"
+                Margin="0,18,0,0">
+      <Button Content="Отмена"
+              IsVisible="{Binding IsConfirmation}"
+              IsCancel="True"
+              MinWidth="96"
+              Click="OnSecondaryButtonClick" />
+      <Button Content="{Binding PrimaryButtonText}"
+              IsDefault="True"
+              MinWidth="96"
+              Classes="Основная"
+              Click="OnPrimaryButtonClick" />
+    </StackPanel>
+
+  </Grid>
+</Window>

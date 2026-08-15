@@ -1,0 +1,273 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.EffectsView"
+             x:DataType="vm:EffectsViewModel">
+
+  <UserControl.Styles>
+    <!--
+      Окраска эффекта отмечена цветной гранью слева: положительный, отрицательный
+      и нейтральный видно с одного взгляда, а фон карточки остаётся спокойным.
+    -->
+    <Style Selector="Border.Отметка">
+      <Setter Property="Width" Value="4" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Margin" Value="0,0,10,0" />
+      <Setter Property="Background" Value="{DynamicResource AppTextDisabledBrush}" />
+    </Style>
+
+    <Style Selector="Border.Отметка.Положительная">
+      <Setter Property="Background" Value="{DynamicResource AppSuccessBrush}" />
+    </Style>
+
+    <Style Selector="Border.Отметка.Отрицательная">
+      <Setter Property="Background" Value="{DynamicResource AppDangerBrush}" />
+    </Style>
+
+    <Style Selector="Border.Отметка.Нейтральная">
+      <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel>
+
+    <!-- ===================== Отчёт ===================== -->
+    <Border DockPanel.Dock="Bottom"
+            Classes="Подсказка"
+            Margin="0,10,0,0"
+            IsVisible="{Binding HasReport}">
+      <TextBlock Text="{Binding LastReport}" Classes="Вторичный" TextWrapping="Wrap" />
+    </Border>
+
+    <Grid ColumnDefinitions="*,10,320">
+
+      <!-- ===================== Панель эффектов ===================== -->
+      <DockPanel Grid.Column="0">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Content="Наложить эффект"
+                    Command="{Binding TogglePickerCommand}"
+                    Classes="Основная" />
+            <Button Content="Снять"
+                    Command="{Binding RemoveCommand}"
+                    IsEnabled="{Binding HasSelection}"
+                    Classes="Опасная" />
+            <Button Content="Убрать наложение"
+                    ToolTip.Tip="Убрать одно наложение складывающегося эффекта"
+                    Command="{Binding RemoveStackCommand}"
+                    IsEnabled="{Binding SelectedEffect.IsStacked, FallbackValue=False}" />
+          </StackPanel>
+
+          <!--
+            Время продвигается отдельно по каждой единице: сколько раундов в минуте,
+            знает игровая система, а не приложение.
+          -->
+          <StackPanel Spacing="4" IsVisible="{Binding HasTimers}">
+            <TextBlock Text="Прошло времени" Classes="Рубрика" />
+            <ItemsControl ItemsSource="{Binding Units}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:EffectTimerUnitViewModel">
+                  <Button Content="{Binding Text}"
+                          Margin="0,0,6,6"
+                          Command="{Binding $parent[ItemsControl].((vm:EffectsViewModel)DataContext).AdvanceCommand}"
+                          CommandParameter="{Binding}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Наложение эффекта. Раскрывается кнопкой и не занимает место постоянно. -->
+        <Border DockPanel.Dock="Top"
+                Classes="Карточка"
+                Margin="0,0,0,8"
+                IsVisible="{Binding IsPickerOpen}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Наложить эффект" Classes="Подзаголовок" />
+
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBox Grid.Column="0" Watermark="Поиск по названию" Text="{Binding PickerSearch}" />
+              <TextBox Grid.Column="1"
+                       Margin="8,0,0,0"
+                       MinWidth="200"
+                       Watermark="Источник"
+                       Text="{Binding Source}" />
+            </Grid>
+
+            <ListBox ItemsSource="{Binding AvailableEffects}"
+                     SelectedItem="{Binding SelectedAvailableEffect}"
+                     MaxHeight="220"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:CharacterOptionViewModel">
+                  <StackPanel Spacing="2" Margin="2">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding DetailsText}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding HasDetails}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Content="Наложить выбранное"
+                    Command="{Binding ApplyCommand}"
+                    HorizontalAlignment="Left"
+                    Classes="Основная" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="Карточка" Padding="0">
+          <Panel>
+            <StackPanel IsVisible="{Binding IsEmpty}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Spacing="6"
+                        Margin="16">
+              <TextBlock Text="Эффектов нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                         Text="Нажмите «Наложить эффект»: показаны эффекты, созданные в разделе «Контент»." />
+            </StackPanel>
+
+            <ListBox ItemsSource="{Binding Effects}"
+                     SelectedItem="{Binding SelectedEffect}"
+                     IsVisible="{Binding !IsEmpty}"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:ActiveEffectViewModel">
+                  <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+
+                    <Border Grid.Column="0"
+                            Classes="Отметка"
+                            Classes.Положительная="{Binding IsPositive}"
+                            Classes.Отрицательная="{Binding IsNegative}"
+                            Classes.Нейтральная="{Binding IsNeutral}" />
+
+                    <StackPanel Grid.Column="1" Spacing="2" Margin="0,0,10,0">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Name}"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding StacksText}"
+                                   Classes="Значение"
+                                   IsVisible="{Binding IsStacked}" />
+                      </StackPanel>
+
+                      <TextBlock Text="{Binding Subtitle}"
+                                 Classes="Вторичный"
+                                 IsVisible="{Binding HasSubtitle}"
+                                 TextWrapping="NoWrap"
+                                 TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding RemainingText}"
+                               Classes="Значение"
+                               VerticalAlignment="Center" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Panel>
+        </Border>
+      </DockPanel>
+
+      <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+      <!-- ===================== Сведения об эффекте ===================== -->
+      <Border Grid.Column="2" Classes="Карточка">
+        <Panel>
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     VerticalAlignment="Center"
+                     TextAlignment="Center"
+                     IsVisible="{Binding !HasSelection}"
+                     Text="Выберите эффект, чтобы увидеть, что именно он изменяет." />
+
+          <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasSelection}">
+            <StackPanel Spacing="10" DataContext="{Binding SelectedEffect}"
+                        x:DataType="vm:ActiveEffectViewModel">
+
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Name}" Classes="Подзаголовок" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Subtitle}"
+                           Classes="Вторичный"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding HasSubtitle}" />
+              </StackPanel>
+
+              <TextBlock Text="{Binding Description}"
+                         TextWrapping="Wrap"
+                         IsVisible="{Binding HasDescription}" />
+
+              <Border Classes="Разделитель" />
+
+              <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Осталось" Classes="Вторичный" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RemainingText}" Classes="Значение" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Наложений" Classes="Вторичный" Margin="0,4,0,0"
+                           IsVisible="{Binding IsStackable}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StacksText}" Classes="Значение" Margin="0,4,0,0"
+                           IsVisible="{Binding IsStackable}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Наложен" Classes="Вторичный" Margin="0,4,0,0" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AppliedAtText}" Margin="0,4,0,0" />
+              </Grid>
+
+              <TextBlock Text="{Binding EndCondition, StringFormat='Прекращается: {0}'}"
+                         Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         IsVisible="{Binding HasEndCondition}" />
+
+              <Border Classes="Разделитель" />
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Что изменяет" Classes="Рубрика" />
+
+                <TextBlock Classes="Вторичный"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding !HasChanges}"
+                           Text="Эффект ничего не изменяет: он только отмечает состояние персонажа." />
+
+                <ItemsControl ItemsSource="{Binding Changes}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EffectChangeViewModel">
+                      <StackPanel Spacing="1" Margin="0,2">
+                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Hint}"
+                                   Classes="Вторичный"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding HasHint}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+            </StackPanel>
+          </ScrollViewer>
+        </Panel>
+      </Border>
+
+    </Grid>
+  </DockPanel>
+
+</UserControl>

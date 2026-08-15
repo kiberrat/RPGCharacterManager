@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RPGCharacterManager.UI.Views.Characters.FieldsStepView"
+             x:DataType="vm:FieldsStepViewModel">
+
+  <!--
+    Форма строится по описанию полей шага теми же средствами, что и редактор
+    контента: добавление поля игровой системой не требует изменения разметки.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ItemsControl ItemsSource="{Binding FieldGroups}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="contentVm:ContentFieldGroupViewModel">
+          <Border Classes="Карточка" Margin="0,0,0,12">
+            <StackPanel Spacing="10">
+              <TextBlock Text="{Binding Title}" Classes="Подзаголовок" />
+
+              <ItemsControl ItemsSource="{Binding Fields}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="contentVm:ContentFieldViewModel">
+                    <Grid ColumnDefinitions="220,*" Margin="0,4">
+                      <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Hint}"
+                                   Classes="Вторичный"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding HasHint}" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="1" Spacing="3">
+                        <TextBox Text="{Binding Text}" IsVisible="{Binding IsText}" />
+
+                        <TextBox Text="{Binding Text}"
+                                 IsVisible="{Binding IsLongText}"
+                                 AcceptsReturn="True"
+                                 MinHeight="90"
+                                 TextWrapping="Wrap" />
+
+                        <ToggleSwitch IsChecked="{Binding BooleanValue}"
+                                      IsVisible="{Binding IsBoolean}"
+                                      OnContent="да"
+                                      OffContent="нет" />
+
+                        <TextBlock Text="{Binding Error}"
+                                   IsVisible="{Binding HasError}"
+                                   Foreground="{DynamicResource AppDangerBrush}"
+                                   TextWrapping="Wrap"
+                                   FontSize="{DynamicResource AppFontSizeSmall}" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </ScrollViewer>
+
+</UserControl>

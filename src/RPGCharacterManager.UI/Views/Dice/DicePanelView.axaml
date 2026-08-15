@@ -1,0 +1,384 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Dice"
+             xmlns:controls="clr-namespace:RPGCharacterManager.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="340" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Dice.DicePanelView"
+             x:DataType="vm:DicePanelViewModel">
+
+  <!--
+    Панель бросков: кубики, формула, сцена полёта и списки бросков.
+
+    Порядок частей повторяет порядок действий: выбрать кубик или написать формулу,
+    бросить, увидеть результат, при желании сохранить бросок и вернуться к нему.
+  -->
+
+  <DockPanel Margin="16,14,16,14">
+
+    <!-- ===================== Заголовок ===================== -->
+    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+      <StackPanel Grid.Column="0" Spacing="1">
+        <TextBlock Text="Кубики" Classes="Подзаголовок" />
+        <TextBlock Text="{Binding CharacterName, StringFormat='Значения персонажа: {0}'}"
+                   Classes="Вторичный"
+                   TextWrapping="NoWrap"
+                   TextTrimming="CharacterEllipsis"
+                   IsVisible="{Binding HasCharacter}" />
+        <TextBlock Text="Без персонажа: только кубики и числа"
+                   Classes="Вторичный"
+                   IsVisible="{Binding !HasCharacter}" />
+      </StackPanel>
+
+      <Button Grid.Column="1"
+              Classes="Тихая"
+              Width="28" Height="28"
+              Padding="0"
+              MinHeight="0"
+              VerticalAlignment="Top"
+              ToolTip.Tip="Закрыть панель бросков"
+              Command="{Binding ToggleCommand}">
+        <Path Classes="ЗначокКнопки"
+              Data="{StaticResource ЗначокЗакрыть}"
+              StrokeThickness="2.2"
+              Width="9" Height="9" />
+      </Button>
+    </Grid>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="10">
+
+        <!-- ===================== Кнопки кубиков ===================== -->
+        <ItemsControl ItemsSource="{Binding Dice}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:DieButtonViewModel">
+              <Button Classes="Кубик"
+                      Margin="0,0,6,6"
+                      ToolTip.Tip="{Binding Hint}"
+                      Command="{Binding $parent[ItemsControl].((vm:DicePanelViewModel)DataContext).RollDieCommand}"
+                      CommandParameter="{Binding}">
+                <TextBlock Text="{Binding Caption}"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!--
+          Набор: нажатие на кубик не бросает его, а добавляет к выражению.
+          Так собирается смешанный бросок вида «2d10 + 4d4 + 15d8».
+        -->
+        <ToggleButton Classes="Режим"
+                      HorizontalAlignment="Stretch"
+                      IsChecked="{Binding IsBuilding}"
+                      ToolTip.Tip="Нажатия на кубики складываются в одно выражение, а бросок делает кнопка «Бросить»">
+          <TextBlock Text="Собирать набор из разных кубиков" TextWrapping="Wrap" TextAlignment="Center" />
+        </ToggleButton>
+
+        <!-- ===================== Количество и способ броска ===================== -->
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Grid.Column="0"
+                     Text="Кубиков"
+                     Classes="Вторичный"
+                     VerticalAlignment="Center"
+                     Margin="0,0,8,0" />
+          <NumericUpDown Grid.Column="1"
+                         Value="{Binding Count}"
+                         Minimum="1"
+                         Maximum="50"
+                         Increment="1"
+                         FormatString="0"
+                         ShowButtonSpinner="True"
+                         ToolTip.Tip="Сколько кубиков добавляет или бросает нажатие на кубик" />
+        </Grid>
+
+        <UniformGrid Columns="3">
+          <ToggleButton Classes="Режим"
+                        Content="Обычный"
+                        Margin="0,0,4,0"
+                        IsChecked="{Binding IsNormalMode, Mode=OneWay}"
+                        Command="{Binding SetNormalCommand}" />
+          <ToggleButton Classes="Режим"
+                        Content="Преимущество"
+                        Margin="0,0,4,0"
+                        ToolTip.Tip="Бросить дважды и взять лучший итог"
+                        IsChecked="{Binding IsAdvantageMode, Mode=OneWay}"
+                        Command="{Binding SetAdvantageCommand}" />
+          <ToggleButton Classes="Режим"
+                        Content="Помеха"
+                        ToolTip.Tip="Бросить дважды и взять худший итог"
+                        IsChecked="{Binding IsDisadvantageMode, Mode=OneWay}"
+                        Command="{Binding SetDisadvantageCommand}" />
+        </UniformGrid>
+
+        <!-- ===================== Формула ===================== -->
+        <StackPanel Spacing="6">
+          <TextBox Watermark="Название броска — необязательно"
+                   Text="{Binding Title}" />
+
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox Grid.Column="0"
+                     Watermark="2d10 + 4d4 + 15d8"
+                     Text="{Binding Expression}">
+              <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding RollCommand}" />
+              </TextBox.KeyBindings>
+            </TextBox>
+
+            <Button Grid.Column="1"
+                    Classes="Тихая"
+                    Margin="4,0,0,0"
+                    Padding="10,0"
+                    Content="Стереть"
+                    ToolTip.Tip="Очистить выражение и начать набор заново"
+                    Command="{Binding ClearExpressionCommand}" />
+
+            <Button Grid.Column="2"
+                    Classes="Основная"
+                    Margin="4,0,0,0"
+                    Content="Бросить"
+                    Command="{Binding RollCommand}" />
+          </Grid>
+
+          <Border Classes="Предупреждение" IsVisible="{Binding HasError}">
+            <TextBlock Text="{Binding Error}" TextWrapping="Wrap" />
+          </Border>
+        </StackPanel>
+
+        <!-- ===================== Сцена броска ===================== -->
+        <Border Classes="Карточка" Padding="8">
+          <StackPanel Spacing="6">
+            <controls:DiceTray Height="190"
+                               Casts="{Binding Casts}"
+                               IsAnimated="{Binding IsAnimated}"
+                               CustomColor="{Binding DieColor}"
+                               DieColor="{DynamicResource AppAccentColor}" />
+
+            <StackPanel Spacing="2" IsVisible="{Binding HasResult}">
+              <TextBlock Classes="Итог" Text="{Binding LastRoll.Total}" />
+              <TextBlock Text="{Binding LastRoll.Expression}"
+                         Classes="Вторичный"
+                         HorizontalAlignment="Center"
+                         TextWrapping="Wrap"
+                         TextAlignment="Center" />
+              <TextBlock Text="{Binding LastRoll.Details}"
+                         Classes="Вторичный"
+                         HorizontalAlignment="Center"
+                         TextWrapping="Wrap"
+                         TextAlignment="Center"
+                         IsVisible="{Binding LastRoll.HasDetails, FallbackValue=False}" />
+
+              <Button Content="{Binding LastRoll.FavoriteAction, FallbackValue='В любимые'}"
+                      Classes="Тихая"
+                      HorizontalAlignment="Center"
+                      Margin="0,4,0,0"
+                      Command="{Binding ToggleFavoriteCommand}"
+                      CommandParameter="{Binding LastRoll}" />
+            </StackPanel>
+
+            <TextBlock Text="Бросьте кубик"
+                       Classes="Вторичный"
+                       HorizontalAlignment="Center"
+                       IsVisible="{Binding HasNotRolled}" />
+          </StackPanel>
+        </Border>
+
+        <!-- ===================== Журнал и любимые броски ===================== -->
+        <Grid ColumnDefinitions="*,*">
+          <ToggleButton Grid.Column="0"
+                        Classes="Режим"
+                        Content="История"
+                        Margin="0,0,4,0"
+                        IsChecked="{Binding ShowHistory, Mode=OneWay}"
+                        Command="{Binding ShowHistoryListCommand}" />
+          <ToggleButton Grid.Column="1"
+                        Classes="Режим"
+                        Content="Любимые"
+                        IsChecked="{Binding ShowFavorites, Mode=OneWay}"
+                        Command="{Binding ShowFavoritesListCommand}" />
+        </Grid>
+
+        <StackPanel Spacing="6" IsVisible="{Binding ShowHistory}">
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     IsVisible="{Binding IsHistoryEmpty}"
+                     Text="Броски ещё не выполнялись." />
+
+          <ItemsControl ItemsSource="{Binding History}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:RollRowViewModel">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,3">
+                  <TextBlock Grid.Column="0"
+                             Text="{Binding Time}"
+                             Classes="Вторичный"
+                             VerticalAlignment="Center"
+                             Margin="0,0,8,0" />
+
+                  <StackPanel Grid.Column="1" Spacing="1" Margin="0,0,8,0">
+                    <TextBlock Text="{Binding Title}"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Details}"
+                               Classes="Вторичный"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding HasDetails}" />
+                  </StackPanel>
+
+                  <TextBlock Grid.Column="2"
+                             Text="{Binding Total}"
+                             Classes="Значение"
+                             VerticalAlignment="Center"
+                             Margin="0,0,6,0" />
+
+                  <Button Grid.Column="3"
+                          Classes="Тихая"
+                          Content="↻"
+                          Padding="6,2"
+                          MinHeight="0"
+                          VerticalAlignment="Center"
+                          ToolTip.Tip="Повторить бросок"
+                          Command="{Binding $parent[ItemsControl].((vm:DicePanelViewModel)DataContext).RepeatCommand}"
+                          CommandParameter="{Binding}" />
+
+                  <Button Grid.Column="4"
+                          Classes="Тихая"
+                          Content="★"
+                          Padding="6,2"
+                          MinHeight="0"
+                          VerticalAlignment="Center"
+                          ToolTip.Tip="Добавить в любимые или убрать из них"
+                          Command="{Binding $parent[ItemsControl].((vm:DicePanelViewModel)DataContext).ToggleFavoriteCommand}"
+                          CommandParameter="{Binding}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Button Content="Очистить историю"
+                  Classes="Тихая"
+                  HorizontalAlignment="Left"
+                  IsVisible="{Binding !IsHistoryEmpty}"
+                  ToolTip.Tip="Любимые броски останутся"
+                  Command="{Binding ClearHistoryCommand}" />
+        </StackPanel>
+
+        <StackPanel Spacing="6" IsVisible="{Binding ShowFavorites}">
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     IsVisible="{Binding IsFavoritesEmpty}"
+                     Text="Любимых бросков нет. Отметьте бросок звёздочкой, чтобы вернуться к нему одним нажатием." />
+
+          <ItemsControl ItemsSource="{Binding Favorites}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:RollRowViewModel">
+                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,3">
+                  <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,8,0">
+                    <TextBlock Text="{Binding Title}"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Expression}"
+                               Classes="Вторичный"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+
+                  <Button Grid.Column="1"
+                          Content="Бросить"
+                          Padding="8,3"
+                          MinHeight="0"
+                          VerticalAlignment="Center"
+                          Command="{Binding $parent[ItemsControl].((vm:DicePanelViewModel)DataContext).RepeatCommand}"
+                          CommandParameter="{Binding}" />
+
+                  <Button Grid.Column="2"
+                          Classes="Тихая"
+                          Content="✕"
+                          Padding="6,2"
+                          MinHeight="0"
+                          Margin="4,0,0,0"
+                          VerticalAlignment="Center"
+                          ToolTip.Tip="Убрать из любимых"
+                          Command="{Binding $parent[ItemsControl].((vm:DicePanelViewModel)DataContext).ToggleFavoriteCommand}"
+                          CommandParameter="{Binding}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <!-- ===================== Калькулятор ===================== -->
+        <Border Classes="Карточка" DataContext="{Binding Calculator}">
+          <StackPanel Spacing="8" x:DataType="vm:CalculatorViewModel">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Калькулятор" Classes="Подзаголовок" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="Очистить историю" Classes="Тихая" Padding="7,3"
+                      IsVisible="{Binding HasHistory}" Command="{Binding ClearHistoryCommand}" />
+            </Grid>
+
+            <TextBox Text="{Binding Expression}" Watermark="Введите выражение, например (125 + 40) / 3"
+                     HorizontalContentAlignment="Right" FontSize="16">
+              <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding CalculateCommand}" />
+              </TextBox.KeyBindings>
+            </TextBox>
+            <TextBlock Text="{Binding Result}" Classes="Итог" HorizontalAlignment="Right"
+                       IsVisible="{Binding HasResult}" />
+            <Border Classes="Предупреждение" IsVisible="{Binding HasError}">
+              <TextBlock Text="{Binding Error}" TextWrapping="Wrap" />
+            </Border>
+
+            <UniformGrid Columns="4" Rows="5">
+              <Button Content="C" Margin="2" Command="{Binding ClearCommand}" />
+              <Button Content="⌫" Margin="2" Command="{Binding BackspaceCommand}" />
+              <Button Content="(" Margin="2" Command="{Binding InputCommand}" CommandParameter="(" />
+              <Button Content=")" Margin="2" Command="{Binding InputCommand}" CommandParameter=")" />
+              <Button Content="7" Margin="2" Command="{Binding InputCommand}" CommandParameter="7" />
+              <Button Content="8" Margin="2" Command="{Binding InputCommand}" CommandParameter="8" />
+              <Button Content="9" Margin="2" Command="{Binding InputCommand}" CommandParameter="9" />
+              <Button Content="÷" Margin="2" Command="{Binding InputCommand}" CommandParameter=" / " />
+              <Button Content="4" Margin="2" Command="{Binding InputCommand}" CommandParameter="4" />
+              <Button Content="5" Margin="2" Command="{Binding InputCommand}" CommandParameter="5" />
+              <Button Content="6" Margin="2" Command="{Binding InputCommand}" CommandParameter="6" />
+              <Button Content="×" Margin="2" Command="{Binding InputCommand}" CommandParameter=" * " />
+              <Button Content="1" Margin="2" Command="{Binding InputCommand}" CommandParameter="1" />
+              <Button Content="2" Margin="2" Command="{Binding InputCommand}" CommandParameter="2" />
+              <Button Content="3" Margin="2" Command="{Binding InputCommand}" CommandParameter="3" />
+              <Button Content="−" Margin="2" Command="{Binding InputCommand}" CommandParameter=" - " />
+              <Button Content="±" Margin="2" Command="{Binding ToggleSignCommand}" />
+              <Button Content="0" Margin="2" Command="{Binding InputCommand}" CommandParameter="0" />
+              <Button Content="," Margin="2" Command="{Binding InputCommand}" CommandParameter="," />
+              <Button Content="+" Margin="2" Command="{Binding InputCommand}" CommandParameter=" + " />
+            </UniformGrid>
+            <Button Content="=" Classes="Основная" FontSize="18" Command="{Binding CalculateCommand}" />
+
+            <ItemsControl ItemsSource="{Binding History}" IsVisible="{Binding HasHistory}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:CalculatorHistoryRowViewModel">
+                  <Button Classes="Тихая" HorizontalContentAlignment="Stretch" Margin="0,2"
+                          Command="{Binding $parent[ItemsControl].((vm:CalculatorViewModel)DataContext).UseHistoryCommand}"
+                          CommandParameter="{Binding}">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding Expression}" Classes="Вторичный" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="1" Text="{Binding Result, StringFormat='= {0}'}" Margin="8,0,0,0" />
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </DockPanel>
+
+</UserControl>

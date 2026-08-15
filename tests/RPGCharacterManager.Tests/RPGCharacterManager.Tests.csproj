@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Tests</RootNamespace>
+    <Description>Автоматические тесты решения.</Description>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <!--
+      Тестовые классы не являются публичным API решения, поэтому требование
+      XML-документации на них не распространяется.
+    -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!--
+      CA1707 запрещает подчёркивания в именах членов. В тестах используется
+      общепринятая схема именования «Метод_Сценарий_ОжидаемыйРезультат»,
+      которая делает отчёт о запуске тестов читаемым.
+    -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Characters\RPGCharacterManager.Characters.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Content\RPGCharacterManager.Content.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Engine\RPGCharacterManager.Engine.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.GameRules\RPGCharacterManager.GameRules.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Infrastructure\RPGCharacterManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Items\RPGCharacterManager.Items.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Dice\RPGCharacterManager.Dice.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.History\RPGCharacterManager.History.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Ai\RPGCharacterManager.Ai.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Import\RPGCharacterManager.Import.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Campaigns\RPGCharacterManager.Campaigns.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Master\RPGCharacterManager.Master.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Layouts\RPGCharacterManager.Layouts.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Search\RPGCharacterManager.Search.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Macros\RPGCharacterManager.Macros.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Statistics\RPGCharacterManager.Statistics.csproj" />
+    <ProjectReference Include="..\..\src\RPGCharacterManager.Extensions\RPGCharacterManager.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

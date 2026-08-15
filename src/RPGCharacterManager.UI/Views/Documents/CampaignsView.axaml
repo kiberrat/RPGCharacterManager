@@ -1,0 +1,372 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:campaigns="clr-namespace:RPGCharacterManager.Core.Abstractions.Campaigns;assembly=RPGCharacterManager.Core"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Content;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.CampaignsView"
+             x:DataType="vm:CampaignsViewModel">
+
+  <Grid ColumnDefinitions="280,*" Margin="{DynamicResource AppDocumentPadding}">
+
+    <!-- ===================== Список кампаний ===================== -->
+    <DockPanel Grid.Column="0" Margin="0,0,18,0">
+
+      <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,12">
+        <TextBlock Text="Кампании" Classes="Заголовок" />
+
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button Content="Новая кампания" Classes="Основная" Command="{Binding CreateCommand}" />
+          <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Classes="Карточка" Padding="0">
+        <Panel>
+          <TextBlock IsVisible="{Binding IsListEmpty}"
+                     Classes="Вторичный"
+                     Margin="16"
+                     TextWrapping="Wrap"
+                     Text="Кампаний пока нет. Создайте первую: в неё войдут персонажи игроков, NPC, монстры, квесты и локации." />
+
+          <ListBox ItemsSource="{Binding Campaigns}"
+                   SelectedItem="{Binding SelectedCampaign}"
+                   IsVisible="{Binding !IsListEmpty}"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   SelectionMode="Single">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="campaigns:CampaignListItem">
+                <StackPanel Spacing="2" Margin="0,3">
+                  <TextBlock Text="{Binding Name}"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding World}"
+                             Classes="Вторичный"
+                             IsVisible="{Binding World, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Classes="Вторичный">
+                    <Run Text="участников:" />
+                    <Run Text="{Binding MemberCount}" />
+                    <Run Text="· событий:" />
+                    <Run Text="{Binding EventCount}" />
+                  </TextBlock>
+                  <TextBlock Text="завершена"
+                             Classes="Вторичный"
+                             IsVisible="{Binding !IsActive}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Panel>
+      </Border>
+    </DockPanel>
+
+    <!-- ===================== Карточка кампании ===================== -->
+    <Panel Grid.Column="1">
+
+      <StackPanel IsVisible="{Binding !IsCampaignOpen}"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center"
+                  Spacing="6"
+                  MaxWidth="520">
+        <TextBlock Text="Кампания не выбрана" Classes="Подзаголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Text="Кампания собирается из того, что уже есть в приложении: персонажей, NPC, монстров, квестов и локаций. Объекты остаются общими — одна и та же локация участвует в любом числе игр." />
+      </StackPanel>
+
+      <DockPanel IsVisible="{Binding IsCampaignOpen}">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="0,0,0,12">
+          <TextBlock Text="{Binding Name}" Classes="Подзаголовок" />
+          <TextBlock Text="{Binding Summary}" Classes="Вторичный" />
+        </StackPanel>
+
+        <TabControl>
+
+          <!-- ===================== Сведения ===================== -->
+          <TabItem Header="Кампания">
+            <ScrollViewer>
+              <StackPanel Spacing="12" Margin="0,12,14,0" MaxWidth="720" HorizontalAlignment="Left">
+
+                <Grid ColumnDefinitions="180,*" RowDefinitions="Auto">
+                  <TextBlock Grid.Column="0" Text="Название" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding Name}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="180,*">
+                  <TextBlock Grid.Column="0" Text="Мир" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1"
+                           Text="{Binding World}"
+                           Watermark="Например: Фаэрун, Ночной город, собственный мир" />
+                </Grid>
+
+                <Grid ColumnDefinitions="180,*">
+                  <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                    <TextBlock Text="Дата начала" />
+                    <TextBlock Text="по календарю мира" Classes="Вторичный" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <TextBox Grid.Column="1"
+                           Text="{Binding StartDate}"
+                           Watermark="Например: 15 день месяца Пепла, 1250 год" />
+                </Grid>
+
+                <Grid ColumnDefinitions="180,*">
+                  <TextBlock Grid.Column="0" Text="Игровая система" VerticalAlignment="Center" />
+                  <ComboBox Grid.Column="1"
+                            ItemsSource="{Binding GameSystems}"
+                            SelectedItem="{Binding SelectedGameSystem}"
+                            HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="core:ContentReference">
+                        <TextBlock Text="{Binding Name}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </Grid>
+
+                <Grid ColumnDefinitions="180,*">
+                  <TextBlock Grid.Column="0" Text="Описание" VerticalAlignment="Top" Margin="0,6,0,0" />
+                  <TextBox Grid.Column="1"
+                           Text="{Binding Description}"
+                           AcceptsReturn="True"
+                           MinHeight="90"
+                           TextWrapping="Wrap" />
+                </Grid>
+
+                <Grid ColumnDefinitions="180,*">
+                  <StackPanel Grid.Column="0" Spacing="1" Margin="0,6,10,0">
+                    <TextBlock Text="Заметки мастера" />
+                    <TextBlock Text="то, чего игрокам знать не следует"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                  <TextBox Grid.Column="1"
+                           Text="{Binding Notes}"
+                           AcceptsReturn="True"
+                           MinHeight="90"
+                           TextWrapping="Wrap" />
+                </Grid>
+
+                <Grid ColumnDefinitions="180,*">
+                  <TextBlock Grid.Column="0" Text="Кампания идёт" VerticalAlignment="Center" />
+                  <ToggleSwitch Grid.Column="1"
+                                IsChecked="{Binding IsActive}"
+                                OnContent="да"
+                                OffContent="завершена" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="Сохранить" Classes="Основная" Command="{Binding SaveCommand}" />
+                  <Button Content="Удалить кампанию" Classes="Опасная" Command="{Binding DeleteCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </ScrollViewer>
+          </TabItem>
+
+          <!-- ===================== Состав ===================== -->
+          <TabItem Header="Состав">
+            <DockPanel Margin="0,12,0,0">
+
+              <Border DockPanel.Dock="Top" Classes="Карточка" Margin="0,0,14,12">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="Добавить в кампанию" Classes="Рубрика" />
+
+                  <Grid ColumnDefinitions="180,8,*,8,*,8,Auto">
+                    <ComboBox Grid.Column="0"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding Kinds}"
+                              SelectedItem="{Binding SelectedKind}"
+                              ToolTip.Tip="Вид объектов: персонажи, NPC, монстры, квесты, локации и любой другой контент">
+                      <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="campaigns:CampaignKind">
+                          <TextBlock Text="{Binding Title}" />
+                        </DataTemplate>
+                      </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBox Grid.Column="2"
+                             Text="{Binding CandidateSearch}"
+                             Watermark="Поиск по названию" />
+
+                    <ComboBox Grid.Column="4"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding Candidates}"
+                              SelectedItem="{Binding SelectedCandidate}">
+                      <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="campaigns:CampaignObject">
+                          <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                      </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Button Grid.Column="6"
+                            Content="Добавить"
+                            Classes="Основная"
+                            Command="{Binding AddMemberCommand}" />
+                  </Grid>
+
+                  <TextBox Text="{Binding NewMemberRole}"
+                           Watermark="Роль в кампании: имя игрока, роль NPC, назначение локации" />
+                </StackPanel>
+              </Border>
+
+              <ScrollViewer>
+                <Panel Margin="0,0,14,0">
+                  <TextBlock IsVisible="{Binding IsRosterEmpty}"
+                             Classes="Вторичный"
+                             TextWrapping="Wrap"
+                             Text="Состав пуст. Добавьте персонажей игроков, NPC, монстров, квесты и локации — они останутся общими объектами приложения и просто войдут в эту игру." />
+
+                  <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:CampaignGroupViewModel">
+                        <Border Classes="Карточка" Margin="0,0,0,12">
+                          <StackPanel Spacing="8">
+
+                            <TextBlock Classes="Рубрика">
+                              <Run Text="{Binding Title}" />
+                              <Run Text="·" />
+                              <Run Text="{Binding Counter}" />
+                            </TextBlock>
+
+                            <ItemsControl ItemsSource="{Binding Members}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CampaignMemberRowViewModel">
+                                  <Grid ColumnDefinitions="*,10,180,10,*,10,Auto"
+                                        Margin="0,0,0,8">
+
+                                    <StackPanel Grid.Column="0" Spacing="1">
+                                      <TextBlock Text="{Binding Name}"
+                                                 TextWrapping="NoWrap"
+                                                 TextTrimming="CharacterEllipsis" />
+                                      <TextBlock Text="объект удалён — уберите ссылку из состава"
+                                                 Classes="Вторичный"
+                                                 IsVisible="{Binding IsMissing}"
+                                                 TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <TextBox Grid.Column="2"
+                                             Text="{Binding Role}"
+                                             Watermark="{Binding RoleTitle}" />
+
+                                    <TextBox Grid.Column="4"
+                                             Text="{Binding Notes}"
+                                             Watermark="Заметки" />
+
+                                    <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="6">
+                                      <Button Content="Сохранить"
+                                              IsVisible="{Binding IsChanged}"
+                                              Command="{Binding $parent[UserControl].((vm:CampaignsViewModel)DataContext).SaveMemberCommand}"
+                                              CommandParameter="{Binding}" />
+                                      <Button Content="Убрать"
+                                              Command="{Binding $parent[UserControl].((vm:CampaignsViewModel)DataContext).RemoveMemberCommand}"
+                                              CommandParameter="{Binding}" />
+                                    </StackPanel>
+                                  </Grid>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Panel>
+              </ScrollViewer>
+            </DockPanel>
+          </TabItem>
+
+          <!-- ===================== Таймлайн ===================== -->
+          <TabItem Header="Таймлайн">
+            <DockPanel Margin="0,12,0,0">
+
+              <Border DockPanel.Dock="Top" Classes="Карточка" Margin="0,0,14,12">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="Добавить событие" Classes="Рубрика" />
+
+                  <Grid ColumnDefinitions="220,8,*,8,Auto">
+                    <TextBox Grid.Column="0"
+                             Text="{Binding NewEventDate}"
+                             Watermark="Игровая дата" />
+
+                    <TextBox Grid.Column="2"
+                             Text="{Binding NewEventTitle}"
+                             Watermark="Что произошло" />
+
+                    <Button Grid.Column="4"
+                            Content="Добавить"
+                            Classes="Основная"
+                            Command="{Binding AddEventCommand}" />
+                  </Grid>
+
+                  <TextBlock Classes="Вторичный"
+                             TextWrapping="Wrap"
+                             Text="События идут в том порядке, в котором вы их расставили: календарь игрового мира не сравнивается с обычным, поэтому порядок задаёте вы." />
+                </StackPanel>
+              </Border>
+
+              <ScrollViewer>
+                <Panel Margin="0,0,14,0">
+                  <TextBlock IsVisible="{Binding IsTimelineEmpty}"
+                             Classes="Вторичный"
+                             TextWrapping="Wrap"
+                             Text="Хронология пуста. Записывайте сюда то, что случилось в игре: основание ордена, гибель наставника, падение города." />
+
+                  <ItemsControl ItemsSource="{Binding Events}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:CampaignEventRowViewModel">
+                        <Border Classes="Карточка" Margin="0,0,0,10">
+                          <StackPanel Spacing="8">
+
+                            <Grid ColumnDefinitions="220,10,*,10,Auto">
+                              <TextBox Grid.Column="0"
+                                       Text="{Binding GameDate}"
+                                       Watermark="Игровая дата" />
+
+                              <TextBox Grid.Column="2" Text="{Binding EventTitle}" />
+
+                              <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6">
+                                <Button Content="Выше"
+                                        Command="{Binding $parent[UserControl].((vm:CampaignsViewModel)DataContext).MoveEventUpCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="Ниже"
+                                        Command="{Binding $parent[UserControl].((vm:CampaignsViewModel)DataContext).MoveEventDownCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="Сохранить"
+                                        IsVisible="{Binding IsChanged}"
+                                        Command="{Binding $parent[UserControl].((vm:CampaignsViewModel)DataContext).SaveEventCommand}"
+                                        CommandParameter="{Binding}" />
+                                <Button Content="Удалить"
+                                        Classes="Опасная"
+                                        Command="{Binding $parent[UserControl].((vm:CampaignsViewModel)DataContext).DeleteEventCommand}"
+                                        CommandParameter="{Binding}" />
+                              </StackPanel>
+                            </Grid>
+
+                            <TextBox Text="{Binding Description}"
+                                     Watermark="Описание события"
+                                     AcceptsReturn="True"
+                                     MinHeight="60"
+                                     TextWrapping="Wrap" />
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Panel>
+              </ScrollViewer>
+            </DockPanel>
+          </TabItem>
+
+        </TabControl>
+      </DockPanel>
+    </Panel>
+  </Grid>
+
+</UserControl>

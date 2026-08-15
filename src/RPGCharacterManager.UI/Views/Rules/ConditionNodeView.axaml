@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Rules"
+             xmlns:views="clr-namespace:RPGCharacterManager.UI.Views.Rules"
+             mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="200"
+             x:Class="RPGCharacterManager.UI.Views.Rules.ConditionNodeView"
+             x:DataType="vm:ConditionNodeViewModel">
+
+  <!--
+    Один узел дерева условий. Представление рекурсивно вкладывает само себя,
+    что позволяет строить условия произвольной вложенности.
+  -->
+  <Panel>
+
+    <!-- ===================== Группа условий ===================== -->
+    <Border IsVisible="{Binding IsGroup}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="{DynamicResource AppCornerRadius}"
+            Background="{DynamicResource AppSurfaceBrush}"
+            Padding="8"
+            Margin="0,3">
+      <StackPanel Spacing="8">
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <ComboBox MinWidth="240"
+                    ItemsSource="{x:Static vm:ConditionNodeViewModel.LogicalOperators}"
+                    SelectedValue="{Binding LogicalOperator}"
+                    SelectedValueBinding="{Binding Value}"
+                    DisplayMemberBinding="{Binding Title}" />
+
+          <CheckBox Content="НЕ (инвертировать)"
+                    VerticalAlignment="Center"
+                    IsChecked="{Binding IsNegated}" />
+
+          <Rectangle Width="1" Margin="4,2" Fill="{DynamicResource AppBorderBrush}" />
+
+          <Button Content="+ условие" Command="{Binding AddComparisonCommand}" />
+          <Button Content="+ группа" Command="{Binding AddGroupCommand}" />
+
+          <Button Content="Удалить"
+                  IsVisible="{Binding CanRemove}"
+                  Command="{Binding RemoveCommand}" />
+        </StackPanel>
+
+        <ItemsControl ItemsSource="{Binding Children}" Margin="16,0,0,0">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ConditionNodeViewModel">
+              <views:ConditionNodeView />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Classes="Вторичный"
+                   Text="Группа пуста — правило выполняется всегда."
+                   IsVisible="{Binding !Children.Count}" />
+
+      </StackPanel>
+    </Border>
+
+    <!-- ===================== Сравнение ===================== -->
+    <Grid IsVisible="{Binding IsComparison}"
+          ColumnDefinitions="*,190,*,Auto"
+          Margin="0,3">
+      <TextBox Grid.Column="0"
+               Watermark="параметр или выражение"
+               Text="{Binding Left}" />
+
+      <ComboBox Grid.Column="1"
+                Margin="6,0"
+                HorizontalAlignment="Stretch"
+                ItemsSource="{x:Static vm:ConditionNodeViewModel.ComparisonOperators}"
+                SelectedValue="{Binding ComparisonOperator}"
+                SelectedValueBinding="{Binding Value}"
+                DisplayMemberBinding="{Binding Title}" />
+
+      <TextBox Grid.Column="2"
+               Watermark="значение, выражение или название эффекта"
+               Text="{Binding Right}" />
+
+      <Button Grid.Column="3"
+              Margin="6,0,0,0"
+              Content="✕"
+              ToolTip.Tip="Удалить условие"
+              Command="{Binding RemoveCommand}" />
+    </Grid>
+
+  </Panel>
+
+</UserControl>

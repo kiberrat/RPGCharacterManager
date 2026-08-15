@@ -1,0 +1,569 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="using:System">
+
+  <!--
+    Единый стиль элементов управления приложения.
+
+    Стили опираются исключительно на ресурсы палитры, поэтому переключение темы
+    и смена акцентного цвета применяются без перезапуска приложения.
+
+    Оформление подчинено трём правилам:
+    рамка появляется только там, где без неё непонятна граница ввода;
+    цветом выделено одно главное действие на экране, остальные — нейтральны;
+    расстояния кратны четырём, поэтому элементы выстраиваются по одной сетке.
+  -->
+
+  <Styles.Resources>
+    <!--
+      Продолжительность анимаций.
+      Документ 003_UI_UX.md ограничивает длительность диапазоном 100–250 мс.
+    -->
+    <sys:TimeSpan x:Key="AppAnimationFast">0:0:0.12</sys:TimeSpan>
+    <sys:TimeSpan x:Key="AppAnimationNormal">0:0:0.18</sys:TimeSpan>
+    <sys:TimeSpan x:Key="AppAnimationSlow">0:0:0.24</sys:TimeSpan>
+  </Styles.Resources>
+
+  <!-- ===================== Типографика ===================== -->
+
+  <Style Selector="TextBlock">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style Selector="TextBlock.Заголовок">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilyDisplay}" />
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSizeTitle}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LineHeight" Value="32" />
+  </Style>
+
+  <Style Selector="TextBlock.Подзаголовок">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilyDisplay}" />
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSizeLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="TextBlock.Вторичный">
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSizeSmall}" />
+  </Style>
+
+  <!-- Надпись раздела формы: короткая, набранная прописными, как в системных настройках. -->
+  <Style Selector="TextBlock.Рубрика">
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSizeSmall}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <!-- Числовое значение: моноширинные цифры не «прыгают» при пересчёте. -->
+  <Style Selector="TextBlock.Значение">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontFeatures" Value="tnum" />
+  </Style>
+
+  <!-- ===================== Поверхности ===================== -->
+
+  <Style Selector="Border.Карточка">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadiusLarge}" />
+    <Setter Property="Padding" Value="{DynamicResource AppCardPadding}" />
+  </Style>
+
+  <!-- Тихая карточка: подсказка или пустое состояние, не претендующее на внимание. -->
+  <Style Selector="Border.Подсказка">
+    <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Padding" Value="{DynamicResource AppPaddingMedium}" />
+  </Style>
+
+  <Style Selector="Border.Разделитель">
+    <Setter Property="Background" Value="{DynamicResource AppSeparatorBrush}" />
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="0,4" />
+  </Style>
+
+  <!-- Сообщение, требующее внимания: цветная только левая грань, фон остаётся спокойным. -->
+  <Style Selector="Border.Предупреждение">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppWarningBrush}" />
+    <Setter Property="BorderThickness" Value="3,0,0,0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadiusSmall}" />
+    <Setter Property="Padding" Value="14,12" />
+  </Style>
+
+  <!-- ===================== Кнопки ===================== -->
+
+  <Style Selector="Button">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="MinHeight" Value="{DynamicResource AppControlHeight}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="{StaticResource AppAnimationFast}" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="Button:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+  </Style>
+
+  <Style Selector="Button:disabled /template/ ContentPresenter">
+    <Setter Property="TextBlock.Foreground" Value="{DynamicResource AppTextDisabledBrush}" />
+    <Setter Property="Opacity" Value="0.6" />
+  </Style>
+
+  <!-- Главное действие экрана. На одном экране такая кнопка должна быть одна. -->
+  <Style Selector="Button.Основная">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.Основная /template/ ContentPresenter">
+    <Setter Property="TextBlock.Foreground" Value="#FFFFFFFF" />
+  </Style>
+
+  <Style Selector="Button.Основная:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentHoverBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="#FFFFFFFF" />
+  </Style>
+
+  <Style Selector="Button.Основная:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentPressedBrush}" />
+  </Style>
+
+  <!-- Кнопка без рамки: второстепенное действие рядом с основным. -->
+  <Style Selector="Button.Тихая">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="Padding" Value="10,6" />
+  </Style>
+
+  <Style Selector="Button.Тихая:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+  </Style>
+
+  <!-- Опасное действие: удаление данных пользователя. -->
+  <Style Selector="Button.Опасная">
+    <Setter Property="Foreground" Value="{DynamicResource AppDangerBrush}" />
+  </Style>
+
+  <Style Selector="Button.Опасная /template/ ContentPresenter">
+    <Setter Property="TextBlock.Foreground" Value="{DynamicResource AppDangerBrush}" />
+  </Style>
+
+  <!-- ===================== Значки ===================== -->
+
+  <!--
+    Значки нарисованы штрихом, а не заливкой: тонкая линия одинаково читается
+    в светлой и тёмной теме и не превращается в тёмное пятно при мелком размере.
+  -->
+  <Style Selector="Path.Значок">
+    <Setter Property="Stroke" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="StrokeThickness" Value="1.6" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="Fill" Value="Transparent" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Width" Value="{DynamicResource AppIconSize}" />
+    <Setter Property="Height" Value="{DynamicResource AppIconSize}" />
+  </Style>
+
+  <Style Selector="Path.ЗначокКнопки">
+    <Setter Property="Stroke" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="StrokeThickness" Value="1.8" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="Fill" Value="Transparent" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Width" Value="15" />
+    <Setter Property="Height" Value="15" />
+  </Style>
+
+  <Style Selector="Button:pointerover Path.ЗначокКнопки">
+    <Setter Property="Stroke" Value="{DynamicResource AppTextPrimaryBrush}" />
+  </Style>
+
+  <!-- ===================== Поля ввода ===================== -->
+
+  <Style Selector="TextBox">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="MinHeight" Value="{DynamicResource AppControlHeight}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+
+  <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppTextDisabledBrush}" />
+  </Style>
+
+  <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="BorderThickness" Value="1.6" />
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="{DynamicResource AppControlHeight}" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceHoverBrush}" />
+  </Style>
+
+  <Style Selector="ComboBoxItem">
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadiusSmall}" />
+  </Style>
+
+  <Style Selector="Slider">
+    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+  </Style>
+
+  <Style Selector="ToggleSwitch">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+  </Style>
+
+  <!-- ===================== Списки ===================== -->
+
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="ListBoxItem">
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+  </Style>
+
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentSoftBrush}" />
+  </Style>
+
+  <Style Selector="ListBoxItem:selected:focus /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentSoftBrush}" />
+  </Style>
+
+  <!-- ===================== Панель навигации ===================== -->
+
+  <!--
+    Панель разделов не исчезает мгновенно, а уезжает за левый край окна.
+    Анимируется именно ширина, а не прозрачность: рабочая область при этом
+    расширяется вместе с движением панели, и окно не «дёргается» в конце.
+  -->
+  <Style Selector="Border.ПанельРазделов">
+    <Setter Property="Width" Value="{DynamicResource AppSidebarWidth}" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Width"
+                          Duration="{StaticResource AppAnimationSlow}"
+                          Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Border.ПанельРазделов.Свёрнута">
+    <Setter Property="Width" Value="0" />
+    <Setter Property="IsHitTestVisible" Value="False" />
+  </Style>
+
+  <Style Selector="ListBox.Навигация">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8,0" />
+  </Style>
+
+  <Style Selector="ListBox.Навигация ListBoxItem">
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+  </Style>
+
+  <!-- Выбранный раздел заливается акцентом: он всегда один и всегда виден. -->
+  <Style Selector="ListBox.Навигация ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="#FFFFFFFF" />
+  </Style>
+
+  <Style Selector="ListBox.Навигация ListBoxItem:selected Path.Значок">
+    <Setter Property="Stroke" Value="#FFFFFFFF" />
+  </Style>
+
+  <Style Selector="ListBox.Навигация ListBoxItem:selected TextBlock">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="ListBox.Навигация ListBoxItem:pointerover Path.Значок">
+    <Setter Property="Stroke" Value="{DynamicResource AppTextPrimaryBrush}" />
+  </Style>
+
+  <!-- ===================== Строка состояния ===================== -->
+
+  <Style Selector="Border.СтрокаСостояния">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AppSeparatorBrush}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="20,6" />
+  </Style>
+
+  <Style Selector="Border.СтрокаСостояния TextBlock">
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSizeSmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="NoWrap" />
+  </Style>
+
+  <!-- ===================== Полоса вкладок рабочей области ===================== -->
+
+  <!--
+    Вкладки построены на списке: содержимое документа живёт отдельно от полосы,
+    поэтому смена документа растворяется плавно, а вкладку можно перетаскивать,
+    не сражаясь с шаблоном TabControl.
+  -->
+  <Style Selector="ListBox.Вкладки">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.Вкладки ListBoxItem">
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="Margin" Value="0,0,4,0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+
+    <!--
+      Ширина вкладки ограничена: длинное имя персонажа не должно занимать всю полосу.
+      Ограничение задано конечным числом ещё и потому, что именно оно сжимается
+      при закрытии вкладки, а анимировать «сколько угодно» невозможно.
+    -->
+    <Setter Property="MaxWidth" Value="240" />
+    <Setter Property="ClipToBounds" Value="True" />
+
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="MaxWidth"
+                          Duration="{StaticResource AppAnimationFast}"
+                          Easing="CubicEaseOut" />
+        <DoubleTransition Property="Opacity" Duration="{StaticResource AppAnimationFast}" />
+      </Transitions>
+    </Setter>
+
+    <!-- Новая вкладка не возникает рывком, а проявляется вместе со своим документом. -->
+    <Style.Animations>
+      <Animation Duration="{StaticResource AppAnimationNormal}" Easing="CubicEaseOut">
+        <KeyFrame Cue="0%">
+          <Setter Property="Opacity" Value="0" />
+        </KeyFrame>
+        <KeyFrame Cue="100%">
+          <Setter Property="Opacity" Value="1" />
+        </KeyFrame>
+      </Animation>
+    </Style.Animations>
+  </Style>
+
+  <!--
+    Закрываемая вкладка сжимается до нуля и гаснет, а соседние вкладки за это же
+    время занимают её место. Документ покидает список только после того, как
+    сжатие закончится, — за это отвечает модель представления главного окна.
+  -->
+  <Style Selector="ListBox.Вкладки ListBoxItem.Исчезает">
+    <Setter Property="MaxWidth" Value="0" />
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.Вкладки ListBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+  </Style>
+
+  <!-- Открытая вкладка приподнята поверхностью, а не подчёркиванием: спокойнее. -->
+  <Style Selector="ListBox.Вкладки ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.Вкладки ListBoxItem:selected:focus /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+  </Style>
+
+  <!--
+    Нажатие не гасит выделение: вкладку подолгу держат нажатой, перетаскивая её,
+    и всё это время должно быть видно, какой документ открыт.
+  -->
+  <Style Selector="ListBox.Вкладки ListBoxItem:selected:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.Вкладки ListBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.Вкладки ListBoxItem:selected TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+  </Style>
+
+  <!--
+    Перетаскиваемая вкладка приподнята над соседними: тень и более светлая
+    поверхность показывают, что её держат, а не просто выбрали.
+  -->
+  <Style Selector="ListBox.Вкладки ListBoxItem.Перетаскивается /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceHoverBrush}" />
+    <Setter Property="BoxShadow" Value="0 4 14 0 #40000000" />
+  </Style>
+
+  <!-- ===================== Вкладки внутри документа ===================== -->
+
+  <!--
+    Синяя полоса под выбранной вкладкой убрана: активная вкладка уже выделена
+    поверхностью, а два признака выбранности сразу спорят друг с другом.
+  -->
+  <Style Selector="TabItem /template/ Border#PART_SelectedPipe">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <!-- Состояние «выбрана» задаётся отдельно: иначе побеждает правило темы Fluent. -->
+  <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="TabControl > TabItem">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSize}" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="Margin" Value="0,0,4,0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="TabControl > TabItem:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+  </Style>
+
+  <Style Selector="TabControl > TabItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource AppAccentSoftBrush}" />
+  </Style>
+
+  <Style Selector="TabControl > TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- ===================== Панель бросков ===================== -->
+
+  <!--
+    Панель кубиков выезжает у правого края так же, как панель разделов уезжает
+    у левого: анимируется ширина, поэтому рабочая область плавно уступает место.
+  -->
+  <Style Selector="Border.ПанельКубиков">
+    <Setter Property="Width" Value="{DynamicResource AppDicePanelWidth}" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Width"
+                          Duration="{StaticResource AppAnimationSlow}"
+                          Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Border.ПанельКубиков.Свёрнута">
+    <Setter Property="Width" Value="0" />
+    <Setter Property="IsHitTestVisible" Value="False" />
+  </Style>
+
+  <!--
+    Кнопка кубика: короткая надпись в квадрате. Название пользовательского кубика
+    длиннее «d20», поэтому кнопка растягивается по надписи, а не обрезает её.
+  -->
+  <Style Selector="Button.Кубик">
+    <Setter Property="MinWidth" Value="52" />
+    <Setter Property="MaxWidth" Value="150" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Выбранный способ броска отмечается так же, как выбранный раздел. -->
+  <Style Selector="ToggleButton.Режим">
+    <Setter Property="Padding" Value="6,6" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="FontSize" Value="{DynamicResource AppFontSizeSmall}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadius}" />
+    <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}" />
+  </Style>
+
+  <Style Selector="ToggleButton.Режим:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AppAccentSoftBrush}" />
+  </Style>
+
+  <Style Selector="ToggleButton.Режим:checked">
+    <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Итог броска: главное число панели. -->
+  <Style Selector="TextBlock.Итог">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilyDisplay}" />
+    <Setter Property="FontSize" Value="34" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <!-- ===================== Полосы прокрутки ===================== -->
+
+  <Style Selector="ScrollBar">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+</Styles>

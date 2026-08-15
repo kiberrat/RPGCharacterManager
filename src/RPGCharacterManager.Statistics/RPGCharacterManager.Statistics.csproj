@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Статистика игры.
+
+    Подсистема не ведёт своего учёта и не хранит счётчиков: она считает то, что
+    уже записано в журнале событий и журнале бросков. Поэтому статистика не может
+    разойтись с журналом, а новое событие попадает в неё тем же путём, что
+    и в журнал, — записью подсистемы, которая его выполнила.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Statistics</RootNamespace>
+    <Description>Статистика бросков, критов, урона, заклинаний и ресурсов.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

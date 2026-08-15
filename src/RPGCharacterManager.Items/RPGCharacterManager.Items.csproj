@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Предметы: оружие, экипировка и инвентарь персонажа.
+
+    Проект не содержит правил ни одной конкретной игры: бросок попадания, урон,
+    критическое попадание и расход боеприпасов задаются формулами оружия и
+    правилами боя, созданными пользователем.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Items</RootNamespace>
+    <Description>Оружие персонажа: расчёт боевых значений, атака и перезарядка.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="RPGCharacterManager.UI.Views.Documents.OverviewView"
+             x:DataType="vm:OverviewViewModel">
+
+  <!--
+    Отступ документа задан полями содержимого, а не отступом ScrollViewer:
+    отступ ScrollViewer не входит в высоту прокручиваемой области, и нижняя
+    часть документа оказывается недостижимой.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left"
+                Margin="{DynamicResource AppDocumentPadding}">
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="{Binding ApplicationName}" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   Text="Универсальная платформа для настольных ролевых игр. Данные хранятся на этом компьютере; сеть нужна только помощнику в разделе «AI»." />
+      </StackPanel>
+
+      <!-- ===================== Сведения о приложении ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Приложение" Classes="Подзаголовок" />
+          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Версия" Classes="Вторичный" />
+            <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{Binding VersionText}" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Среда выполнения .NET" Classes="Вторичный" Margin="0,6,0,0" />
+            <SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RuntimeText}" Margin="0,6,0,0" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Хранилище данных ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0" Text="Хранилище данных" Classes="Подзаголовок" />
+            <Button Grid.Column="1"
+                    Content="Проверить"
+                    Command="{Binding RefreshCommand}" />
+          </Grid>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Ellipse Width="10" Height="10" VerticalAlignment="Center"
+                     Classes="Индикатор"
+                     Classes.Доступна="{Binding IsDatabaseAvailable}" />
+            <TextBlock Text="{Binding DatabaseStateText}" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Файл базы данных" Classes="Вторичный" />
+            <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DatabaseFilePath}" TextWrapping="Wrap" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Размер базы данных" Classes="Вторичный" Margin="0,6,0,0" />
+            <SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DatabaseSizeText}" Margin="0,6,0,0" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Каталог данных" Classes="Вторичный" Margin="0,6,0,0" />
+            <SelectableTextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DataDirectory}" TextWrapping="Wrap" Margin="0,6,0,0" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Каталог резервных копий" Classes="Вторичный" Margin="0,6,0,0" />
+            <SelectableTextBlock Grid.Row="3" Grid.Column="1" Text="{Binding BackupsDirectory}" TextWrapping="Wrap" Margin="0,6,0,0" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Каталог контента" Classes="Вторичный" Margin="0,6,0,0" />
+            <SelectableTextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ContentDirectory}" TextWrapping="Wrap" Margin="0,6,0,0" />
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Журналы" Classes="Вторичный" Margin="0,6,0,0" />
+            <SelectableTextBlock Grid.Row="5" Grid.Column="1" Text="{Binding LogFilesText}" Margin="0,6,0,0" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Движок вычислений ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Движок вычислений" Classes="Подзаголовок" />
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     Text="Все игровые расчёты выполняются единым движком формул. Проверочное вычисление при Сила = 18 и Уровень = 5:" />
+          <SelectableTextBlock Text="{Binding FormulaEngineText}"
+                               FontFamily="Consolas,Courier New,monospace"
+                               TextWrapping="Wrap" />
+          <SelectableTextBlock Text="{Binding FormulaFunctionsText}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Состав следующих этапов ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Подключённые разделы" Classes="Подзаголовок" />
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap" Text="{Binding SectionsText}" />
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     Text="Подсистема сама заявляет о себе оболочке и появляется в панели разделов — этот перечень собран из их заявок, а не набран текстом." />
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+
+  <UserControl.Styles>
+    <Style Selector="Ellipse.Индикатор">
+      <Setter Property="Fill" Value="{DynamicResource AppDangerBrush}" />
+    </Style>
+    <Style Selector="Ellipse.Индикатор.Доступна">
+      <Setter Property="Fill" Value="{DynamicResource AppSuccessBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+</UserControl>

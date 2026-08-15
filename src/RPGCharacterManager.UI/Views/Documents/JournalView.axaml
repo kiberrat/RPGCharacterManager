@@ -1,0 +1,169 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.JournalView"
+             x:DataType="vm:JournalViewModel">
+
+  <UserControl.Styles>
+    <!--
+      Вид события отмечен цветной гранью слева: бросок, изменение ресурса
+      и смену экипировки видно, не читая строку.
+    -->
+    <Style Selector="Border.Отметка">
+      <Setter Property="Width" Value="4" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Margin" Value="0,0,12,0" />
+      <Setter Property="Background" Value="{DynamicResource AppTextDisabledBrush}" />
+    </Style>
+
+    <Style Selector="Border.Отметка.Бросок">
+      <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    </Style>
+
+    <Style Selector="Border.Отметка.Ресурс">
+      <Setter Property="Background" Value="{DynamicResource AppSuccessBrush}" />
+    </Style>
+
+    <Style Selector="Border.Отметка.Экипировка">
+      <Setter Property="Background" Value="{DynamicResource AppWarningBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel>
+
+    <StackPanel DockPanel.Dock="Top" Margin="{DynamicResource AppDocumentPadding}" Spacing="14">
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Журнал" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   Text="Броски, изменения ресурсов, применённые заклинания, использованные предметы и смена экипировки — в порядке времени." />
+      </StackPanel>
+
+      <!-- ===================== Отбор ===================== -->
+      <Grid ColumnDefinitions="220,10,180,10,*,10,Auto">
+        <ComboBox Grid.Column="0"
+                  HorizontalAlignment="Stretch"
+                  ItemsSource="{Binding Characters}"
+                  SelectedItem="{Binding SelectedCharacter}"
+                  ToolTip.Tip="Показать события одного персонажа">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:CharacterFilterOption">
+              <TextBlock Text="{Binding Name}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <ComboBox Grid.Column="2"
+                  HorizontalAlignment="Stretch"
+                  ItemsSource="{Binding Kinds}"
+                  SelectedItem="{Binding SelectedKind}"
+                  ToolTip.Tip="Показать события одного вида">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:JournalKindOption">
+              <TextBlock Text="{Binding Title}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <TextBox Grid.Column="4"
+                 Watermark="Поиск по описанию"
+                 Text="{Binding Search}" />
+
+        <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="6">
+          <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+          <Button Content="Очистить" Classes="Опасная" Command="{Binding ClearCommand}" />
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+
+    <!-- ===================== Итог и продолжение ===================== -->
+    <Border DockPanel.Dock="Bottom" Margin="28,0,28,20">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0"
+                   Text="{Binding Counter}"
+                   Classes="Вторичный"
+                   VerticalAlignment="Center" />
+
+        <Button Grid.Column="1"
+                Content="Показать больше"
+                IsVisible="{Binding HasMore}"
+                Command="{Binding ShowMoreCommand}" />
+      </Grid>
+    </Border>
+
+    <!-- ===================== Записи ===================== -->
+    <Border Classes="Карточка" Margin="28,0,28,14" Padding="0">
+      <Panel>
+        <StackPanel IsVisible="{Binding IsEmpty}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Spacing="6"
+                    Margin="20">
+          <TextBlock Text="Записей нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     TextAlignment="Center"
+                     MaxWidth="460"
+                     Text="Журнал пополняется сам: бросьте кубик, измените здоровье, примените заклинание или наденьте предмет — событие появится здесь." />
+        </StackPanel>
+
+        <ListBox ItemsSource="{Binding Records}"
+                 IsVisible="{Binding !IsEmpty}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 SelectionMode="Single">
+          <ListBox.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ListBox.ItemsPanel>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:JournalRowViewModel">
+              <Grid ColumnDefinitions="Auto,150,200,*,Auto" Margin="0,3">
+
+                <Border Grid.Column="0"
+                        Classes="Отметка"
+                        Classes.Бросок="{Binding IsRoll}"
+                        Classes.Ресурс="{Binding IsResource}"
+                        Classes.Экипировка="{Binding IsEquipment}" />
+
+                <StackPanel Grid.Column="1" Spacing="1" Margin="0,0,10,0">
+                  <TextBlock Text="{Binding Time}" Classes="Значение" />
+                  <TextBlock Text="{Binding Day}" Classes="Вторичный" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Spacing="1" Margin="0,0,10,0">
+                  <TextBlock Text="{Binding Title}"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Character}"
+                             Classes="Вторичный"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="3"
+                           Text="{Binding Description}"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap" />
+
+                <TextBlock Grid.Column="4"
+                           Text="{Binding Change}"
+                           Classes="Значение"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           IsVisible="{Binding HasChange}" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Panel>
+    </Border>
+
+  </DockPanel>
+
+</UserControl>

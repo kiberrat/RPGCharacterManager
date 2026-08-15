@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Слой общих примитивов. Не имеет ни одной зависимости — ни на пакеты,
+    ни на другие проекты решения. Это гарантирует отсутствие циклических связей.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Shared</RootNamespace>
+    <Description>Общие примитивы, утилиты и константы решения.</Description>
+  </PropertyGroup>
+
+</Project>

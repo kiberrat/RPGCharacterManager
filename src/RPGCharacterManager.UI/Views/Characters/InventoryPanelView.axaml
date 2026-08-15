@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.InventoryPanelView"
+             x:DataType="charactersVm:SheetPanelViewModel">
+
+  <!-- инвентарь персонажа. -->
+  <StackPanel DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel" Spacing="12">
+    <Border Classes="Карточка">
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="2" Margin="0,0,0,10">
+          <TextBlock Text="Мана" Classes="Подзаголовок" />
+          <TextBlock Text="Укажите текущее значение и, если нужно, максимум. Изменения сохраняются автоматически."
+                     Classes="Вторичный" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="Auto,140,Auto,140,Auto">
+          <TextBlock Grid.Column="0" Text="Текущая" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <NumericUpDown Grid.Column="1" Value="{Binding ManaCurrent}" Minimum="0"
+                         Maximum="999999999999" Increment="1" FormatString="0.##"
+                         ShowButtonSpinner="True" />
+          <TextBlock Grid.Column="2" Text="из" Classes="Вторичный"
+                     VerticalAlignment="Center" Margin="10,0" />
+          <NumericUpDown Grid.Column="3" Value="{Binding ManaMaximum}" Minimum="0"
+                         Maximum="999999999999" Increment="1" FormatString="0.##"
+                         ShowButtonSpinner="True" Watermark="Без максимума" />
+          <Button Grid.Column="4" Content="Сбросить максимум" Classes="Тихая" Margin="8,0,0,0"
+                  Command="{Binding ClearManaMaximumCommand}" />
+        </Grid>
+
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
+          <Button Content="−1" Classes="Тихая" Command="{Binding DecreaseManaCommand}" />
+          <Button Content="+1" Classes="Тихая" Command="{Binding IncreaseManaCommand}" />
+          <TextBlock Text="{Binding ManaSaveStatus}" Classes="Вторичный"
+                     VerticalAlignment="Center" Margin="8,0,0,0" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Classes="Карточка">
+      <StackPanel Spacing="10">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Деньги" Classes="Подзаголовок" />
+          <TextBlock Text="Добавляйте любые валюты: золотые монеты, серебро, жетоны или собственные единицы."
+                     Classes="Вторичный" TextWrapping="Wrap" />
+        </StackPanel>
+        <TextBlock Text="Деньги ещё не добавлены. Заполните поля ниже."
+                   Classes="Вторичный" IsVisible="{Binding HasNoCurrencies}" />
+        <ItemsControl ItemsSource="{Binding Currencies}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="charactersVm:CharacterCurrencyRowViewModel">
+              <Grid ColumnDefinitions="2*,160,Auto,Auto" Margin="0,3">
+                <TextBox Grid.Column="0" Text="{Binding Name}" Watermark="Название валюты" Margin="0,0,6,0" />
+                <NumericUpDown Grid.Column="1" Value="{Binding Amount}" Minimum="0"
+                               Maximum="999999999999" Increment="1" FormatString="0.##"
+                               ShowButtonSpinner="True" Margin="0,0,6,0" />
+                <Button Grid.Column="2" Content="Сохранить" Padding="10,5"
+                        Command="{Binding $parent[ItemsControl].((vm:CharacterSheetViewModel)DataContext).SaveCurrencyCommand}"
+                        CommandParameter="{Binding}" />
+                <Button Grid.Column="3" Content="✕" Classes="Тихая" Padding="8,5" Margin="5,0,0,0"
+                        ToolTip.Tip="Удалить валюту"
+                        Command="{Binding $parent[ItemsControl].((vm:CharacterSheetViewModel)DataContext).DeleteCurrencyCommand}"
+                        CommandParameter="{Binding}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Border Classes="ВложеннаяКарточка">
+          <Grid ColumnDefinitions="2*,160,Auto">
+            <TextBox Grid.Column="0" Text="{Binding NewCurrencyName}"
+                     Watermark="Например, Золотые монеты" Margin="0,0,6,0" />
+            <NumericUpDown Grid.Column="1" Value="{Binding NewCurrencyAmount}" Minimum="0"
+                           Maximum="999999999999" Increment="1" FormatString="0.##"
+                           ShowButtonSpinner="True" Margin="0,0,6,0" />
+            <Button Grid.Column="2" Content="Добавить" Classes="Основная"
+                    Command="{Binding AddCurrencyCommand}" />
+          </Grid>
+        </Border>
+      </StackPanel>
+    </Border>
+  <!--
+    Раздел собран отдельной моделью представления: у инвентаря собственные
+    отбор, порядок показа и действия, не связанные с остальным листом.
+  -->
+  <ContentControl Content="{Binding Inventory}" Margin="0,10,0,0" />
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.CharacterWizardView"
+             x:DataType="vm:CharacterWizardViewModel">
+
+  <Grid ColumnDefinitions="260,4,*">
+
+    <!-- ===================== Шаги мастера ===================== -->
+    <DockPanel Grid.Column="0" Margin="12,12,0,12">
+      <TextBlock DockPanel.Dock="Top" Text="Шаги" Classes="Вторичный" Margin="0,0,0,6" />
+
+      <Border Classes="Карточка" Padding="0">
+        <ListBox ItemsSource="{Binding Steps}"
+                 SelectedItem="{Binding CurrentStep}"
+                 Background="Transparent"
+                 BorderThickness="0">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="charactersVm:WizardStepViewModel">
+              <TextBlock Text="{Binding Title}" TextWrapping="Wrap" Margin="2" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+    </DockPanel>
+
+    <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+    <!-- ===================== Текущий шаг ===================== -->
+    <DockPanel Grid.Column="2" Margin="0,12,12,12">
+
+      <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,10">
+        <TextBlock Text="{Binding ProgressText}" Classes="Вторичный" />
+        <TextBlock Text="{Binding CurrentStep.Title}" Classes="Заголовок" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding CurrentStep.Description}" Classes="Вторичный" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <Border DockPanel.Dock="Bottom" Margin="0,10,0,0">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Content="Назад"
+                  Command="{Binding GoBackCommand}"
+                  IsEnabled="{Binding CanGoBack}" />
+          <Button Content="Далее"
+                  Command="{Binding GoForwardCommand}"
+                  IsEnabled="{Binding CanGoForward}" />
+          <Button Content="Создать персонажа"
+                  Command="{Binding CreateCommand}"
+                  Classes="Основная" />
+          <TextBlock Classes="Вторичный"
+                     VerticalAlignment="Center"
+                     IsVisible="{Binding !IsLastStep}"
+                     Text="Создать персонажа можно на любом шаге: проверка выполняется в любом случае." />
+        </StackPanel>
+      </Border>
+
+      <!--
+        Страница шага отображается по соглашению об именовании: модель
+        …ViewModels.Characters.XStepViewModel показывается представлением
+        …Views.Characters.XStepView (см. ViewLocator).
+      -->
+      <ContentControl Content="{Binding CurrentStep}" />
+    </DockPanel>
+
+  </Grid>
+
+</UserControl>

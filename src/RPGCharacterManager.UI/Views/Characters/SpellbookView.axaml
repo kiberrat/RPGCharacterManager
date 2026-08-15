@@ -1,0 +1,325 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.SpellbookView"
+             x:DataType="vm:SpellbookViewModel">
+
+  <!--
+    Слева — книга заклинаний по уровням, справа — сведения о выбранном заклинании
+    с применением, внизу — пределы книги и отчёт о последнем действии.
+  -->
+  <DockPanel>
+
+    <!-- ===================== Итоги ===================== -->
+    <Border DockPanel.Dock="Bottom" Classes="Подсказка" Margin="0,10,0,0">
+      <StackPanel Spacing="4">
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <TextBlock Text="{Binding KnownText}" />
+          <TextBlock Text="{Binding PreparedText}" IsVisible="{Binding UsesPreparation}" />
+        </StackPanel>
+
+        <TextBlock Text="{Binding LastReport}"
+                   IsVisible="{Binding HasReport}"
+                   Classes="Вторичный"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <Grid ColumnDefinitions="*,10,320">
+
+      <!-- ===================== Книга заклинаний ===================== -->
+      <DockPanel Grid.Column="0">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+          <TextBox Watermark="Поиск по названию, школе и категории"
+                   Text="{Binding Search}" />
+
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Content="Выучить заклинание"
+                    Command="{Binding TogglePickerCommand}"
+                    Classes="Основная" />
+            <Button Content="Забыть"
+                    Command="{Binding ForgetCommand}"
+                    IsEnabled="{Binding HasSelection}"
+                    Classes="Опасная" />
+          </StackPanel>
+
+          <!-- Концентрация всегда на виду: это состояние персонажа, а не строки списка. -->
+          <Border Classes="Предупреждение" IsVisible="{Binding IsConcentrating}">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0"
+                         VerticalAlignment="Center"
+                         TextWrapping="Wrap"
+                         Text="{Binding ConcentratingOn, StringFormat='Концентрация: {0}'}" />
+              <Button Grid.Column="1"
+                      Content="Прервать"
+                      Margin="10,0,0,0"
+                      Command="{Binding StopConcentrationCommand}" />
+            </Grid>
+          </Border>
+        </StackPanel>
+
+        <!-- Изучение заклинания. Раскрывается кнопкой и не занимает место постоянно. -->
+        <Border DockPanel.Dock="Top"
+                Classes="Карточка"
+                Margin="0,0,0,8"
+                IsVisible="{Binding IsPickerOpen}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Выучить заклинание" Classes="Подзаголовок" />
+
+            <TextBox Watermark="Поиск по названию" Text="{Binding PickerSearch}" />
+
+            <ListBox ItemsSource="{Binding AvailableSpells}"
+                     SelectedItem="{Binding SelectedAvailableSpell}"
+                     MaxHeight="220"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:CharacterOptionViewModel">
+                  <StackPanel Spacing="2" Margin="2">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding DetailsText}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding HasDetails}" />
+                    <TextBlock Text="{Binding UnavailableReason}"
+                               IsVisible="{Binding HasUnavailableReason}"
+                               Foreground="{DynamicResource AppWarningBrush}"
+                               TextWrapping="Wrap"
+                               FontSize="{DynamicResource AppFontSizeSmall}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Content="Выучить выбранное"
+                    Command="{Binding LearnCommand}"
+                    HorizontalAlignment="Left"
+                    Classes="Основная" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="Карточка" Padding="0">
+          <Panel>
+            <StackPanel IsVisible="{Binding IsEmpty}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Spacing="6"
+                        Margin="16">
+              <TextBlock Text="Заклинаний нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                         IsVisible="{Binding !IsFiltered}"
+                         Text="Нажмите «Выучить заклинание»: показаны заклинания, созданные в разделе «Контент»." />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                         IsVisible="{Binding IsFiltered}"
+                         Text="Под поиск ничего не подошло." />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsEmpty}">
+              <ItemsControl ItemsSource="{Binding Levels}" Margin="10">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:SpellbookLevelViewModel">
+                    <StackPanel Spacing="4" Margin="0,0,0,10">
+                      <TextBlock Text="{Binding Title}" Classes="Рубрика" Margin="2,0" />
+
+                      <ListBox ItemsSource="{Binding Spells}"
+                               SelectedItem="{Binding $parent[UserControl].((vm:SpellbookViewModel)DataContext).SelectedSpell}"
+                               Background="Transparent"
+                               BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                          <DataTemplate x:DataType="vm:SpellbookEntryViewModel">
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                              <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,10,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                  <TextBlock Text="{Binding Name}"
+                                             TextWrapping="NoWrap"
+                                             TextTrimming="CharacterEllipsis" />
+                                  <TextBlock Text="подготовлено"
+                                             Classes="Вторичный"
+                                             IsVisible="{Binding IsPrepared}" />
+                                  <TextBlock Text="концентрация"
+                                             Foreground="{DynamicResource AppWarningBrush}"
+                                             FontSize="{DynamicResource AppFontSizeSmall}"
+                                             VerticalAlignment="Center"
+                                             IsVisible="{Binding IsConcentrating}" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding Subtitle}"
+                                           Classes="Вторичный"
+                                           IsVisible="{Binding HasSubtitle}"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis" />
+                              </StackPanel>
+
+                              <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding ExpectedRange}"
+                                           Classes="Значение"
+                                           HorizontalAlignment="Right"
+                                           IsVisible="{Binding HasExpectedRange}" />
+                                <TextBlock Text="{Binding CostText}"
+                                           Classes="Вторичный"
+                                           HorizontalAlignment="Right"
+                                           IsVisible="{Binding HasCost}" />
+                              </StackPanel>
+                            </Grid>
+                          </DataTemplate>
+                        </ListBox.ItemTemplate>
+                      </ListBox>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Panel>
+        </Border>
+      </DockPanel>
+
+      <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+      <!-- ===================== Сведения и применение ===================== -->
+      <Border Grid.Column="2" Classes="Карточка">
+        <DockPanel>
+
+          <!-- Применение выбранного заклинания. -->
+          <StackPanel DockPanel.Dock="Bottom"
+                      Spacing="8"
+                      Margin="0,10,0,0"
+                      IsVisible="{Binding HasSelection}">
+            <Border Classes="Разделитель" />
+
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Уровень применения" Classes="Вторичный" VerticalAlignment="Center" />
+              <NumericUpDown Minimum="{Binding MinimumCastLevel}"
+                             Maximum="30"
+                             Increment="1"
+                             FormatString="0"
+                             Width="110"
+                             Value="{Binding CastLevel}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Button Content="Применить"
+                      Command="{Binding CastCommand}"
+                      IsEnabled="{Binding SelectedSpell.CanCast, FallbackValue=False}"
+                      Classes="Основная" />
+              <Button Content="Подготовка"
+                      ToolTip.Tip="Подготовить заклинание или снять подготовку"
+                      Command="{Binding TogglePreparedCommand}" />
+            </StackPanel>
+          </StackPanel>
+
+          <Panel>
+            <StackPanel IsVisible="{Binding !HasSelection}"
+                        VerticalAlignment="Center"
+                        Spacing="8">
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         TextAlignment="Center"
+                         Text="Выберите заклинание, чтобы увидеть его сведения и применить." />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasSelection}">
+              <StackPanel Spacing="10" DataContext="{Binding SelectedSpell}"
+                          x:DataType="vm:SpellbookEntryViewModel">
+
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{Binding Name}" Classes="Подзаголовок" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Subtitle}"
+                             Classes="Вторичный"
+                             TextWrapping="Wrap"
+                             IsVisible="{Binding HasSubtitle}" />
+                </StackPanel>
+
+                <TextBlock Text="{Binding Description}"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding HasDescription}" />
+
+                <Border Classes="Разделитель" />
+
+                <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                  <TextBlock Grid.Row="0" Grid.Column="0" Text="Результат" Classes="Вторичный"
+                             IsVisible="{Binding HasExpectedRange}" />
+                  <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ExpectedRange}" Classes="Значение"
+                             IsVisible="{Binding HasExpectedRange}" />
+
+                  <TextBlock Grid.Row="1" Grid.Column="0" Text="Стоимость" Classes="Вторичный" Margin="0,4,0,0"
+                             IsVisible="{Binding HasCost}" />
+                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CostText}" Classes="Значение" Margin="0,4,0,0"
+                             IsVisible="{Binding HasCost}" />
+
+                  <TextBlock Grid.Row="2" Grid.Column="0" Text="Дальность" Classes="Вторичный" Margin="0,4,0,0"
+                             IsVisible="{Binding HasRange}" />
+                  <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Range}" Margin="0,4,0,0"
+                             IsVisible="{Binding HasRange}" TextWrapping="Wrap" />
+
+                  <TextBlock Grid.Row="3" Grid.Column="0" Text="Длительность" Classes="Вторичный" Margin="0,4,0,0"
+                             IsVisible="{Binding HasDuration}" />
+                  <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Duration}" Margin="0,4,0,0"
+                             IsVisible="{Binding HasDuration}" TextWrapping="Wrap" />
+
+                  <TextBlock Grid.Row="4" Grid.Column="0" Text="Компоненты" Classes="Вторичный" Margin="0,4,0,0"
+                             IsVisible="{Binding HasComponents}" />
+                  <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Components}" Margin="0,4,0,0"
+                             IsVisible="{Binding HasComponents}" TextWrapping="Wrap" />
+
+                  <TextBlock Grid.Row="5" Grid.Column="0" Text="Применений" Classes="Вторичный" Margin="0,4,0,0"
+                             IsVisible="{Binding WasUsed}" />
+                  <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding TimesUsedText}" Classes="Значение" Margin="0,4,0,0"
+                             IsVisible="{Binding WasUsed}" />
+                </Grid>
+
+                <TextBlock Text="Требует концентрации."
+                           Classes="Вторичный"
+                           IsVisible="{Binding RequiresConcentration}" />
+
+                <TextBlock Text="Можно применить как ритуал."
+                           Classes="Вторичный"
+                           IsVisible="{Binding IsRitual}" />
+
+                <TextBlock Text="{Binding BlockedReason}"
+                           Foreground="{DynamicResource AppWarningBrush}"
+                           TextWrapping="Wrap"
+                           FontSize="{DynamicResource AppFontSizeSmall}"
+                           IsVisible="{Binding HasBlockedReason}" />
+
+                <!-- История применения относится к книге, а не к выбранному заклинанию. -->
+                <Border Classes="Разделитель"
+                        IsVisible="{Binding $parent[UserControl].((vm:SpellbookViewModel)DataContext).HasHistory}" />
+
+                <StackPanel Spacing="4"
+                            IsVisible="{Binding $parent[UserControl].((vm:SpellbookViewModel)DataContext).HasHistory}">
+                  <TextBlock Text="История применения" Classes="Рубрика" />
+                  <ItemsControl ItemsSource="{Binding $parent[UserControl].((vm:SpellbookViewModel)DataContext).History}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:SpellCastRecordViewModel">
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                          <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                                       FontSize="{DynamicResource AppFontSizeSmall}" />
+                            <TextBlock Text="{Binding Value, StringFormat='Итог: {0}'}"
+                                       Classes="Вторичный"
+                                       IsVisible="{Binding HasValue}" />
+                          </StackPanel>
+                          <TextBlock Grid.Column="1"
+                                     Text="{Binding CastAtText}"
+                                     Classes="Вторичный"
+                                     VerticalAlignment="Top" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+
+              </StackPanel>
+            </ScrollViewer>
+          </Panel>
+        </DockPanel>
+      </Border>
+
+    </Grid>
+  </DockPanel>
+
+</UserControl>

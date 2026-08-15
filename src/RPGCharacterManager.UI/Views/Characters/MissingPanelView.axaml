@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+             x:Class="RPGCharacterManager.UI.Views.Characters.MissingPanelView"
+             x:DataType="charactersVm:SheetPanelViewModel">
+
+  <!-- Панель листа персонажа: ссылка на панель, которой больше нет. -->
+  <Border Classes="Предупреждение" Margin="0,10,0,0">
+    <StackPanel Spacing="4">
+      <TextBlock Text="{Binding Title}" Classes="Подзаголовок" TextWrapping="Wrap" />
+      <TextBlock Classes="Вторичный"
+                 TextWrapping="Wrap"
+                 Text="Этой панели больше нет в приложении. Уберите её из макета в разделе «Интерфейс»." />
+    </StackPanel>
+  </Border>
+</UserControl>

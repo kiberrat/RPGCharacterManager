@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Журнал событий.
+
+    Служба только читает и очищает журнал: записи создают сами подсистемы, каждая
+    о своём событии. Броски журнал берёт у подсистемы бросков, а не хранит второй
+    раз, поэтому список событий не может разойтись с историей бросков.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.History</RootNamespace>
+    <Description>Журнал событий: броски, ресурсы, заклинания и экипировка.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,267 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="720"
+             x:Class="RPGCharacterManager.UI.Views.Documents.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <!--
+    Отступ документа задан полями содержимого, а не отступом ScrollViewer:
+    отступ ScrollViewer не входит в высоту прокручиваемой области, и нижняя
+    часть документа оказывается недостижимой.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="20" MaxWidth="820" HorizontalAlignment="Left"
+                Margin="{DynamicResource AppDocumentPadding}">
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Настройки" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   Text="Изменения применяются и сохраняются немедленно." />
+      </StackPanel>
+
+      <!-- ===================== Оформление ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Оформление" Classes="Подзаголовок" />
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Тема оформления" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1"
+                      MinWidth="240"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding ThemeOptions}"
+                      SelectedValue="{Binding Theme}"
+                      SelectedValueBinding="{Binding Value}"
+                      DisplayMemberBinding="{Binding Title}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Акцентный цвет" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1"
+                      MinWidth="240"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding AccentOptions}"
+                      SelectedValue="{Binding Accent}"
+                      SelectedValueBinding="{Binding Value}"
+                      DisplayMemberBinding="{Binding Title}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*,80">
+            <TextBlock Grid.Column="0" Text="Размер шрифта" VerticalAlignment="Center" />
+            <Slider Grid.Column="1"
+                    Minimum="{Binding MinimumFontSize}"
+                    Maximum="{Binding MaximumFontSize}"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    Value="{Binding FontSize}" />
+            <TextBlock Grid.Column="2"
+                       Text="{Binding FontSize, StringFormat='{}{0:F0} px'}"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Right" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*,80">
+            <TextBlock Grid.Column="0" Text="Масштаб интерфейса" VerticalAlignment="Center" />
+            <Slider Grid.Column="1"
+                    Minimum="{Binding MinimumInterfaceScale}"
+                    Maximum="{Binding MaximumInterfaceScale}"
+                    TickFrequency="0.05"
+                    IsSnapToTickEnabled="True"
+                    Value="{Binding InterfaceScale}" />
+            <TextBlock Grid.Column="2"
+                       Text="{Binding InterfaceScale, StringFormat='{}{0:P0}'}"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Right" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Данные ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Данные и сохранение" Classes="Подзаголовок" />
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Интервал резервных копий, ч" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1"
+                           MinWidth="180"
+                           HorizontalAlignment="Left"
+                           Minimum="1"
+                           Maximum="720"
+                           Increment="1"
+                           FormatString="0"
+                           Value="{Binding BackupIntervalHours}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Срок хранения копий, дней" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1"
+                           MinWidth="180"
+                           HorizontalAlignment="Left"
+                           Minimum="1"
+                           Maximum="3650"
+                           Increment="1"
+                           FormatString="0"
+                           Value="{Binding BackupRetentionDays}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Записей в журнале бросков" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1"
+                           MinWidth="180"
+                           HorizontalAlignment="Left"
+                           Minimum="0"
+                           Maximum="100000"
+                           Increment="50"
+                           FormatString="0"
+                           Value="{Binding DiceHistoryLimit}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Показывать полёт кубика" VerticalAlignment="Center" />
+            <ToggleSwitch Grid.Column="1"
+                          IsChecked="{Binding DiceAnimationEnabled}"
+                          OnContent="Кубик летит и катится"
+                          OffContent="Сразу показать итог" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Помощник ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Помощник" Classes="Подзаголовок" />
+
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     Text="Помощнику нужен ключ службы языковых моделей. Ключ хранится только в вашем файле настроек и передаётся лишь самой службе. Без ключа приложение работает как обычно — недоступен только раздел «AI»." />
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Служба" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1"
+                      MinWidth="280"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding AiProviderOptions}"
+                      SelectedValue="{Binding AiProvider}"
+                      SelectedValueBinding="{Binding Value}"
+                      DisplayMemberBinding="{Binding Title}" />
+          </Grid>
+
+          <Border Classes="Подсказка">
+            <TextBlock Text="{Binding AiServiceNotice}" Classes="Вторичный" TextWrapping="Wrap" />
+          </Border>
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Ключ доступа" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Spacing="6">
+              <TextBox PasswordChar="•" Text="{Binding AiApiKey}" />
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="{Binding AiKeyPage, StringFormat='Ключ выдаётся на {0}. У каждой службы свой ключ: переключение не стирает уже введённый.'}" />
+            </StackPanel>
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*,10,Auto">
+            <TextBlock Grid.Column="0" Text="Модель" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1"
+                      HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding AiModels}"
+                      SelectedItem="{Binding AiModel}" />
+            <Button Grid.Column="3"
+                    Content="Обновить список"
+                    Command="{Binding RefreshAiModelsCommand}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Стиль ответов" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1"
+                      MinWidth="240"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding AiStyleOptions}"
+                      SelectedValue="{Binding AiStyle}"
+                      SelectedValueBinding="{Binding Value}"
+                      DisplayMemberBinding="{Binding Title}" />
+          </Grid>
+
+          <Grid ColumnDefinitions="220,*">
+            <Button Grid.Column="0"
+                    Content="Проверить связь"
+                    HorizontalAlignment="Left"
+                    Command="{Binding CheckAiCommand}" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding AiCheckText}"
+                       Classes="Вторичный"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Обновления ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Обновления приложения" Classes="Подзаголовок" />
+          <TextBlock Text="{Binding UpdateStatusText}" Classes="Вторичный" TextWrapping="Wrap" />
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding UpdateProgress}" Height="8" />
+          <TextBlock Text="{Binding UpdateReleaseNotes}" TextWrapping="Wrap" MaxHeight="180" />
+          <WrapPanel Orientation="Horizontal">
+            <Button Content="Проверить обновления" Margin="0,0,10,0"
+                    Command="{Binding CheckUpdatesCommand}" />
+            <Button Content="Скачать" Margin="0,0,10,0"
+                    Command="{Binding DownloadUpdateCommand}" />
+            <Button Content="Установить и перезапустить"
+                    Command="{Binding InstallUpdateCommand}" />
+          </WrapPanel>
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     Text="Перед установкой приложение автоматически создаёт резервную копию персонажей и настроек." />
+        </StackPanel>
+      </Border>
+      <!-- ===================== Файлы приложения ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Файлы приложения" Classes="Подзаголовок" />
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Каталог данных" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Spacing="6">
+              <TextBlock Text="{Binding DataDirectory}" Classes="Вторичный" />
+              <Button Content="Открыть папку данных"
+                      HorizontalAlignment="Left"
+                      Command="{Binding OpenDataFolderCommand}" />
+            </StackPanel>
+          </Grid>
+
+          <Border Classes="Разделитель" />
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Каталог журналов" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Spacing="6">
+              <TextBlock Text="{Binding LogsDirectory}" Classes="Вторичный" />
+              <Button Content="Открыть папку журналов"
+                      HorizontalAlignment="Left"
+                      Command="{Binding OpenLogsFolderCommand}" />
+            </StackPanel>
+          </Grid>
+
+          <Border Classes="Разделитель" />
+
+          <Grid ColumnDefinitions="220,*">
+            <TextBlock Grid.Column="0" Text="Версия" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       VerticalAlignment="Center"
+                       Text="{Binding Version}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Button Content="Восстановить значения по умолчанию"
+              HorizontalAlignment="Left"
+              Command="{Binding RestoreDefaultsCommand}" />
+
+    </StackPanel>
+  </ScrollViewer>
+
+</UserControl>

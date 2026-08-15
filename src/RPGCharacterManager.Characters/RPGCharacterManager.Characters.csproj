@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Персонажи: мастер создания, автоматический пересчёт параметров и развитие персонажа.
+
+    Проект не содержит правил ни одной конкретной игры: состав шагов, требования,
+    формулы и ограничения берутся из контента и правил, созданных пользователем.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Characters</RootNamespace>
+    <Description>Мастер создания персонажа, лист персонажа и автоматический пересчёт.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

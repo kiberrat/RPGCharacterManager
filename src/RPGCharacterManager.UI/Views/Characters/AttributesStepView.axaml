@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RPGCharacterManager.UI.Views.Characters.AttributesStepView"
+             x:DataType="vm:AttributesStepViewModel">
+
+  <DockPanel>
+
+    <!-- ===================== Способ распределения ===================== -->
+    <Border DockPanel.Dock="Top" Classes="Карточка" Margin="0,0,0,10">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Способ распределения" Classes="Подзаголовок" />
+
+        <ComboBox ItemsSource="{Binding Methods}"
+                  SelectedItem="{Binding SelectedMethod}"
+                  HorizontalAlignment="Stretch">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:AttributeMethodOption">
+              <TextBlock Text="{Binding DisplayName}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <TextBlock Text="{Binding SelectedMethod.Description}" Classes="Вторичный" TextWrapping="Wrap" />
+
+        <!-- Покупка очков -->
+        <Grid ColumnDefinitions="220,*" IsVisible="{Binding IsPointBuy}">
+          <TextBlock Grid.Column="0" Text="Бюджет очков" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding PointBudgetText}" />
+        </Grid>
+
+        <!-- Стандартный набор -->
+        <Grid ColumnDefinitions="220,*" IsVisible="{Binding IsStandardArray}">
+          <TextBlock Grid.Column="0" Text="Набор значений" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1"
+                   Text="{Binding StandardArrayText}"
+                   Watermark="Например: 15, 14, 13, 12, 10, 8" />
+        </Grid>
+
+        <!-- Случайный бросок -->
+        <Grid ColumnDefinitions="220,*,Auto" IsVisible="{Binding IsRandomRoll}">
+          <TextBlock Grid.Column="0" Text="Формула броска" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding RollFormula}" Watermark="Например: 3к6" />
+          <Button Grid.Column="2"
+                  Content="Бросить"
+                  Command="{Binding RollCommand}"
+                  Margin="6,0,0,0"
+                  Classes="Основная" />
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Button Content="Значения по умолчанию" Command="{Binding ResetCommand}" />
+          <TextBlock Text="{Binding MethodSummary}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <TextBlock Text="{Binding MethodError}"
+                   IsVisible="{Binding HasMethodError}"
+                   Foreground="{DynamicResource AppDangerBrush}"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <!-- ===================== Характеристики ===================== -->
+    <Border Classes="Карточка" Padding="0">
+      <Panel>
+        <StackPanel IsVisible="{Binding IsEmpty}"
+                    VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" Margin="16">
+          <TextBlock Text="Характеристики не созданы" Classes="Подзаголовок" HorizontalAlignment="Center" />
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
+                     Text="Опишите характеристики своей игровой системы в разделе «Контент». Приложение не содержит готовых характеристик — их состав определяете вы." />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsEmpty}">
+          <ItemsControl ItemsSource="{Binding Attributes}" Margin="12">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AttributeAssignmentViewModel">
+                <Grid ColumnDefinitions="220,140,*,Auto" Margin="0,4">
+
+                  <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding RangeHint}" Classes="Вторичный" TextWrapping="Wrap" />
+                  </StackPanel>
+
+                  <TextBox Grid.Column="1"
+                           Text="{Binding Text}"
+                           IsEnabled="{Binding IsEditable}"
+                           IsVisible="{Binding !IsArrayMode}" />
+
+                  <ComboBox Grid.Column="1"
+                            ItemsSource="{Binding ArrayValues}"
+                            SelectedItem="{Binding SelectedArrayValue}"
+                            IsVisible="{Binding IsArrayMode}"
+                            HorizontalAlignment="Stretch" />
+
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
+                              Margin="12,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                      <TextBlock Text="итог" Classes="Вторичный" />
+                      <TextBlock Text="{Binding Value, StringFormat={}{0:0.####}}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                      <TextBlock Text="модификатор" Classes="Вторичный" />
+                      <TextBlock Text="{Binding Modifier, StringFormat={}{0:0.####}}" />
+                    </StackPanel>
+                  </StackPanel>
+
+                  <TextBlock Grid.Column="3"
+                             Text="вычисляется формулой"
+                             Classes="Вторичный"
+                             VerticalAlignment="Center"
+                             IsVisible="{Binding IsDerived}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Panel>
+    </Border>
+
+  </DockPanel>
+
+</UserControl>

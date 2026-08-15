@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Ядро приложения: модели, контракты и события.
+
+    Архитектурное решение: единственная зависимость ядра — проект Shared,
+    содержащий примитивы без собственных зависимостей. Ядро не знает ни о
+    пользовательском интерфейсе, ни о базе данных, ни об инфраструктуре.
+    Обоснование см. docs/ARCHITECTURE_DECISIONS.md.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Core</RootNamespace>
+    <Description>Модели, контракты и события ядра приложения.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

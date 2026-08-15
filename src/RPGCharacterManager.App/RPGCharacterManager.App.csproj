@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Точка входа приложения и корень композиции.
+    Здесь и только здесь известны конкретные реализации всех служб.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>RPGCharacterManager.App</RootNamespace>
+    <AssemblyName>RPGCharacterManager</AssemblyName>
+    <Description>Настольное приложение RPG Character Manager.</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Characters\RPGCharacterManager.Characters.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Content\RPGCharacterManager.Content.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Engine\RPGCharacterManager.Engine.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.GameRules\RPGCharacterManager.GameRules.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Infrastructure\RPGCharacterManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.UI\RPGCharacterManager.UI.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Items\RPGCharacterManager.Items.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Dice\RPGCharacterManager.Dice.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.History\RPGCharacterManager.History.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Ai\RPGCharacterManager.Ai.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Import\RPGCharacterManager.Import.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Campaigns\RPGCharacterManager.Campaigns.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Master\RPGCharacterManager.Master.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Layouts\RPGCharacterManager.Layouts.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Search\RPGCharacterManager.Search.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Macros\RPGCharacterManager.Macros.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Statistics\RPGCharacterManager.Statistics.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Extensions\RPGCharacterManager.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Diagnostics" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Velopack" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

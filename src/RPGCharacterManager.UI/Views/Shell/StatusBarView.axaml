@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Shell"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="28"
+             x:Class="RPGCharacterManager.UI.Views.Shell.StatusBarView"
+             x:DataType="vm:StatusBarViewModel">
+
+  <Border Classes="СтрокаСостояния">
+    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto">
+
+      <!-- Текущий персонаж -->
+      <TextBlock Grid.Column="0"
+                 Text="{Binding CharacterName, StringFormat='Персонаж: {0}'}"
+                 IsVisible="{Binding CharacterName, Converter={x:Static ObjectConverters.IsNotNull}}"
+                 Margin="0,0,16,0" />
+
+      <!-- Текущая игровая система -->
+      <TextBlock Grid.Column="1"
+                 Text="{Binding GameSystemName, StringFormat='Система: {0}'}"
+                 IsVisible="{Binding GameSystemName, Converter={x:Static ObjectConverters.IsNotNull}}"
+                 Margin="0,0,16,0" />
+
+      <!-- Состояние сохранения -->
+      <TextBlock Grid.Column="3" Text="{Binding SaveStateText}" Margin="0,0,16,0" />
+
+      <!-- Фоновые задачи и память -->
+      <TextBlock Grid.Column="4" Text="{Binding BackgroundTasksText}" Margin="0,0,16,0" />
+      <TextBlock Grid.Column="5" Text="{Binding MemoryUsageText}" Margin="0,0,16,0" />
+
+      <!-- Версия проекта -->
+      <TextBlock Grid.Column="6" Text="{Binding VersionText}" />
+
+    </Grid>
+  </Border>
+
+</UserControl>

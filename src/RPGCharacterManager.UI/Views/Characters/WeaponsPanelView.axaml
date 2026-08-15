@@ -1,0 +1,172 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.WeaponsPanelView"
+             x:DataType="charactersVm:SheetPanelViewModel">
+
+  <!-- оружие и атаки. -->
+  <Panel DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel">
+  <DockPanel Margin="0,10,0,0">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Content="Выдать оружие" Command="{Binding ToggleWeaponPickerCommand}" />
+        <TextBlock Classes="Вторичный" VerticalAlignment="Center"
+                   Text="Атака, перезарядка и запас боеприпасов сохраняются сразу, кнопка «Сохранить» для них не нужна." />
+      </StackPanel>
+
+      <Border Classes="Карточка" IsVisible="{Binding IsWeaponPickerOpen}">
+        <StackPanel Spacing="8">
+          <TextBox Watermark="Поиск по названию" Text="{Binding WeaponSearch}" />
+          <ListBox ItemsSource="{Binding AvailableWeapons}"
+                   SelectedItem="{Binding SelectedAvailableWeapon}"
+                   MaxHeight="220"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:CharacterOptionViewModel">
+                <StackPanel Spacing="2" Margin="2">
+                  <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding DetailsText}"
+                             Classes="Вторичный"
+                             TextWrapping="Wrap"
+                             IsVisible="{Binding HasDetails}" />
+                  <TextBlock Text="{Binding UnavailableReason}"
+                             IsVisible="{Binding HasUnavailableReason}"
+                             Foreground="{DynamicResource AppWarningBrush}"
+                             TextWrapping="Wrap"
+                             FontSize="{DynamicResource AppFontSizeSmall}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <Button Content="Выдать выбранное"
+                  Command="{Binding AddWeaponCommand}"
+                  HorizontalAlignment="Left" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="12">
+
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                   IsVisible="{Binding HasNoWeapons}"
+                   Text="У персонажа нет оружия. Нажмите «Выдать оружие». Само оружие — меч, винтовка, жезл или что угодно ещё — создаётся в разделе «Контент»: там задаются кость попадания, формулы урона, масштабирование и боеприпасы." />
+
+        <ItemsControl ItemsSource="{Binding Weapons}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="charactersVm:WeaponCardViewModel">
+              <Border Classes="Карточка" Margin="0,0,0,10">
+                <StackPanel Spacing="8">
+
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,10,0">
+                      <TextBlock Text="{Binding Name}" Classes="Подзаголовок" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Hint}"
+                                 Classes="Вторичный"
+                                 TextWrapping="Wrap"
+                                 IsVisible="{Binding HasHint}" />
+                      <TextBlock Text="{Binding Description}"
+                                 Classes="Вторичный"
+                                 TextWrapping="Wrap"
+                                 IsVisible="{Binding HasDescription}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Content="Убрать"
+                            VerticalAlignment="Top"
+                            Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.RemoveWeaponCommand}"
+                            CommandParameter="{Binding}" />
+                  </Grid>
+
+                  <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Попадание" Classes="Вторичный" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AttackText}" TextWrapping="Wrap" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Урон" Classes="Вторичный" />
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="{Binding DamageText}" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding DamageType}"
+                                 Classes="Вторичный"
+                                 IsVisible="{Binding HasDamageType}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Критическое"
+                               Classes="Вторичный" IsVisible="{Binding HasCritical}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CriticalText}"
+                               TextWrapping="Wrap" IsVisible="{Binding HasCritical}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Свойства"
+                               Classes="Вторичный" IsVisible="{Binding HasProperties}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding PropertiesText}"
+                               TextWrapping="Wrap" IsVisible="{Binding HasProperties}" />
+                  </Grid>
+
+                  <TextBlock Text="{Binding ScalingText}"
+                             Classes="Вторичный"
+                             TextWrapping="Wrap"
+                             IsVisible="{Binding HasScaling}" />
+
+                  <StackPanel Spacing="6" IsVisible="{Binding UsesAmmunition}">
+                    <TextBlock Text="{Binding AmmunitionText}" TextWrapping="Wrap" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="Запас" Classes="Вторичный" VerticalAlignment="Center" />
+                      <TextBox Text="{Binding ReserveText}" Width="90" />
+                      <Button Content="Записать"
+                              Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.SaveAmmunitionReserveCommand}"
+                              CommandParameter="{Binding}" />
+                      <TextBlock Text="{Binding ReloadTime}"
+                                 Classes="Вторичный"
+                                 VerticalAlignment="Center"
+                                 IsVisible="{Binding HasMagazine}" />
+                    </StackPanel>
+                  </StackPanel>
+
+                  <TextBlock Text="{Binding UnavailableReason}"
+                             IsVisible="{Binding HasUnavailableReason}"
+                             Foreground="{DynamicResource AppWarningBrush}"
+                             TextWrapping="Wrap" />
+
+                  <TextBlock Text="{Binding IssuesText}"
+                             IsVisible="{Binding HasIssues}"
+                             Foreground="{DynamicResource AppDangerBrush}"
+                             TextWrapping="Wrap"
+                             FontSize="{DynamicResource AppFontSizeSmall}" />
+
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Content="Атака"
+                            IsEnabled="{Binding CanAttack}"
+                            Classes="Основная"
+                            Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.AttackCommand}"
+                            CommandParameter="{Binding}" />
+                    <Button Content="Перезарядить"
+                            IsVisible="{Binding HasMagazine}"
+                            Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.ReloadWeaponCommand}"
+                            CommandParameter="{Binding}" />
+                  </StackPanel>
+
+                  <Border IsVisible="{Binding HasLastResult}"
+                          Background="{DynamicResource AppSurfaceBrush}"
+                          CornerRadius="{DynamicResource AppCornerRadius}"
+                          Padding="8">
+                    <TextBlock Text="{Binding LastResult}" TextWrapping="Wrap" />
+                  </Border>
+
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+  </Panel>
+</UserControl>

@@ -1,0 +1,217 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels"
+        xmlns:shellVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Shell"
+        xmlns:behaviors="clr-namespace:RPGCharacterManager.UI.Behaviors"
+        xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Presentation;assembly=RPGCharacterManager.Core"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="RPGCharacterManager.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding WindowTitle}"
+        Width="1320" Height="860"
+        MinWidth="920" MinHeight="620"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppWindowBrush}"
+        FontFamily="{DynamicResource AppFontFamily}"
+        FontSize="{DynamicResource AppFontSize}">
+
+  <!--
+    Окно состоит из двух частей: панель разделов слева и рабочая область справа.
+
+    Верхнего меню и панели инструментов нет намеренно. Раньше «Персонажи», «Контент»
+    и «Настройки» открывались из трёх мест сразу, и пользователю приходилось гадать,
+    чем эти три места различаются. Теперь у раздела ровно один вход — строка в панели
+    слева, а действия живут внутри своих разделов.
+  -->
+
+  <LayoutTransformControl>
+    <!--
+      Дополнительный масштаб интерфейса поверх масштабирования Windows.
+      LayoutTransformControl изменяет компоновку, а не только отрисовку, поэтому
+      элементы остаются чёткими и корректно занимают доступное пространство.
+    -->
+    <LayoutTransformControl.LayoutTransform>
+      <ScaleTransform ScaleX="{Binding InterfaceScale}" ScaleY="{Binding InterfaceScale}" />
+    </LayoutTransformControl.LayoutTransform>
+
+    <DockPanel LastChildFill="True">
+
+      <!-- ===================== Строка состояния ===================== -->
+      <ContentControl DockPanel.Dock="Bottom" Content="{Binding StatusBar}" />
+
+      <Grid ColumnDefinitions="Auto,*,Auto">
+
+        <!-- ===================== Панель разделов ===================== -->
+        <!--
+          Скрытие панели — это движение, а не исчезновение: анимация ширины
+          показывает, куда делись разделы, и окно остаётся цельным.
+        -->
+        <Border Grid.Column="0"
+                Classes="ПанельРазделов"
+                Classes.Свёрнута="{Binding !IsNavigationVisible}"
+                Background="{DynamicResource AppSidebarBrush}">
+          <!--
+            Содержимое сохраняет свою ширину и прижато к правому краю, поэтому
+            при сжатии панели оно уезжает влево целиком, а не сплющивается.
+          -->
+          <DockPanel Width="{DynamicResource AppSidebarWidth}" HorizontalAlignment="Right">
+
+            <!--
+              Название приложения в панели не повторяется: оно уже написано
+              в заголовке окна, а лишняя надпись только отнимает место у разделов.
+            -->
+            <Border DockPanel.Dock="Top" Height="16" />
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+              <ListBox Classes="Навигация"
+                       ItemsSource="{Binding NavigationItems}"
+                       SelectedItem="{Binding SelectedNavigationItem}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="shellVm:NavigationItemViewModel">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                      <Path Classes="Значок"
+                            Data="{Binding Icon}"
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding HasIcon}" />
+                      <TextBlock Text="{Binding Title}"
+                                 VerticalAlignment="Center"
+                                 TextWrapping="NoWrap" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </ScrollViewer>
+
+          </DockPanel>
+        </Border>
+
+        <!-- ===================== Рабочая область ===================== -->
+        <DockPanel Grid.Column="1" Margin="0">
+
+          <!-- Полоса открытых документов вместе с кнопками панелей. -->
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="14,14,20,8">
+
+            <Button Grid.Column="0"
+                    Classes="Тихая"
+                    Width="32" Height="32"
+                    Padding="0"
+                    MinHeight="0"
+                    Margin="0,1,10,0"
+                    VerticalAlignment="Top"
+                    ToolTip.Tip="Показать или скрыть панель разделов"
+                    Command="{Binding ToggleNavigationCommand}">
+              <Path Classes="ЗначокКнопки" Data="{StaticResource ЗначокПанель}" />
+            </Button>
+
+            <!--
+              Полоса вкладок сделана списком, а не TabControl: содержимое документа
+              живёт отдельно и потому сменяется плавно, а порядок вкладок пользователь
+              меняет перетаскиванием — так же, как в браузере.
+            -->
+            <ListBox Grid.Column="1"
+                     Classes="Вкладки"
+                     behaviors:DragReorder.Command="{Binding MoveDocumentCommand}"
+                     behaviors:DisappearingItem.Item="{Binding ClosingDocument}"
+                     ItemsSource="{Binding Documents}"
+                     SelectedItem="{Binding SelectedDocument}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="core:IDocument">
+                  <!--
+                    Заголовок занимает всё оставшееся место и при нехватке ширины
+                    сокращается многоточием, поэтому кнопка закрытия видна всегда,
+                    каким бы длинным ни было имя открытого объекта.
+                  -->
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Title}"
+                               VerticalAlignment="Center"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis" />
+                    <Button Grid.Column="1"
+                            Classes="Тихая"
+                            Width="20" Height="20"
+                            Padding="0"
+                            MinHeight="0"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            ToolTip.Tip="Закрыть вкладку"
+                            Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).CloseDocumentCommand}"
+                            CommandParameter="{Binding}">
+                      <Path Classes="ЗначокКнопки"
+                            Data="{StaticResource ЗначокЗакрыть}"
+                            StrokeThickness="2.2"
+                            Width="8" Height="8" />
+                    </Button>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!--
+              Кубики нужны в любом разделе, поэтому у панели бросков собственная
+              кнопка рядом с вкладками, а не строка в панели разделов: бросок не
+              открывает документ и не закрывает лист персонажа.
+            -->
+            <Button Grid.Column="2"
+                    Classes="Тихая"
+                    Width="32" Height="32"
+                    Padding="0"
+                    MinHeight="0"
+                    Margin="10,1,0,0"
+                    VerticalAlignment="Top"
+                    ToolTip.Tip="Показать или скрыть панель бросков"
+                    Command="{Binding DicePanel.ToggleCommand}">
+              <Path Classes="ЗначокКнопки" Data="{StaticResource ЗначокКубики}" />
+            </Button>
+
+          </Grid>
+
+          <!--
+            Содержимое активного документа. Представление создаётся только для него,
+            поэтому открытые вкладки не расходуют память на разметку.
+
+            Смена документа показывается перекрёстным растворением: переход длится
+            меньше времени реакции на движение, но снимает ощущение подмены экрана.
+          -->
+          <TransitioningContentControl Content="{Binding ActiveDocument}" ClipToBounds="True">
+            <TransitioningContentControl.PageTransition>
+              <CrossFade Duration="{StaticResource AppAnimationNormal}" />
+            </TransitioningContentControl.PageTransition>
+          </TransitioningContentControl>
+
+        </DockPanel>
+
+        <!-- ===================== Панель бросков ===================== -->
+        <!--
+          Панель выезжает у правого края и сжимает рабочую область, а не
+          накрывает её: лист персонажа остаётся виден во время броска.
+        -->
+        <Border Grid.Column="2"
+                Classes="ПанельКубиков"
+                Classes.Свёрнута="{Binding !DicePanel.IsOpen}"
+                Background="{DynamicResource AppSidebarBrush}">
+          <!--
+            Содержимое сохраняет свою ширину и прижато к левому краю, поэтому
+            при сжатии панели оно уезжает вправо целиком, а не сплющивается.
+          -->
+          <ContentControl Width="{DynamicResource AppDicePanelWidth}"
+                          HorizontalAlignment="Left"
+                          Content="{Binding DicePanel}" />
+        </Border>
+
+      </Grid>
+
+    </DockPanel>
+  </LayoutTransformControl>
+
+</Window>

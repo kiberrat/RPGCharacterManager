@@ -1,0 +1,33 @@
+# Артефакты сборки
+bin/
+obj/
+artifacts/
+
+# Файлы среды разработки
+.vs/
+.idea/
+*.user
+*.suo
+
+# Пользовательские данные и журналы
+*.db
+*.db-shm
+*.db-wal
+*.log
+# Локальные установщики и временные каталоги выпуска
+.release-work/
+.tools/
+releases-local/
+publish/
+publish-ready/
+publish-ready-previous-*/
+publish-staging-*/
+# Локальная установленная версия и временные рабочие файлы
+local-installed-preview/
+tmp/
+
+# Локально установленные инструменты .NET
+tools/dotnet-ef.exe
+tools/dotnet-ef/
+
+tools/.store/

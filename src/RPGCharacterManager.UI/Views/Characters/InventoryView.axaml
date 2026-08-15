@@ -1,0 +1,358 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:items="clr-namespace:RPGCharacterManager.Core.Abstractions.Items;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.InventoryView"
+             x:DataType="vm:InventoryViewModel">
+
+  <!--
+    Расположение соответствует документу 014_Инвентарь.md: слева категории,
+    в центре список предметов с поиском, справа сведения о выбранном предмете,
+    внизу ноша и стоимость имущества.
+  -->
+  <DockPanel>
+
+    <!-- ===================== Итоги ===================== -->
+    <Border DockPanel.Dock="Bottom" Classes="Подсказка" Margin="0,10,0,0">
+      <StackPanel Spacing="4">
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <TextBlock Text="{Binding WeightText}" />
+          <TextBlock Text="Перегрузка"
+                     IsVisible="{Binding IsOverloaded}"
+                     Foreground="{DynamicResource AppWarningBrush}" />
+        </StackPanel>
+
+        <TextBlock Text="{Binding MoneyText}" Classes="Вторичный" />
+
+        <TextBlock Text="{Binding LastReport}"
+                   IsVisible="{Binding HasReport}"
+                   Classes="Вторичный"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <Grid ColumnDefinitions="200,10,*,10,300">
+
+      <!-- ===================== Категории ===================== -->
+      <Border Grid.Column="0" Classes="Карточка" Padding="8">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top"
+                     Text="Категории"
+                     Classes="Рубрика"
+                     Margin="4,2,4,6" />
+
+          <TextBlock DockPanel.Dock="Bottom"
+                     Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     Margin="4,6,4,2"
+                     IsVisible="{Binding HasNoCategories}"
+                     Text="Категории создаются в разделе «Контент» → «Категории предметов» и выбираются у предмета." />
+
+          <ListBox ItemsSource="{Binding Categories}"
+                   SelectedItem="{Binding SelectedCategory}"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:InventoryCategoryViewModel">
+                <Grid ColumnDefinitions="*,Auto" Margin="{Binding Indent}">
+                  <TextBlock Grid.Column="0"
+                             Text="{Binding Name}"
+                             TextTrimming="CharacterEllipsis"
+                             TextWrapping="NoWrap" />
+                  <TextBlock Grid.Column="1"
+                             Text="{Binding CountText}"
+                             Classes="Вторичный"
+                             Margin="8,0,0,0" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </DockPanel>
+      </Border>
+
+      <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+      <!-- ===================== Список предметов ===================== -->
+      <DockPanel Grid.Column="2">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+
+          <!-- Поиск занимает всю ширину: строка запроса бывает длинной. -->
+          <TextBox Watermark="Поиск по названию, типу, категории и пометке"
+                   Text="{Binding Search}" />
+
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <ComboBox MinWidth="180"
+                      ItemsSource="{Binding SortOptions}"
+                      SelectedItem="{Binding SelectedSort}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:InventorySortOption">
+                  <TextBlock Text="{Binding DisplayName}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <ToggleButton Content="Обратный порядок" IsChecked="{Binding IsDescending}" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Content="Получить предмет"
+                    Command="{Binding TogglePickerCommand}"
+                    Classes="Основная" />
+            <Button Content="Использовать"
+                    Command="{Binding UseCommand}"
+                    IsEnabled="{Binding SelectedEntry.CanUse, FallbackValue=False}" />
+            <Button Content="Заряды"
+                    ToolTip.Tip="Восстановить заряды предмета"
+                    Command="{Binding RestoreChargesCommand}"
+                    IsEnabled="{Binding SelectedEntry.HasCharges, FallbackValue=False}" />
+            <Button Content="Убрать"
+                    Command="{Binding RemoveCommand}"
+                    IsEnabled="{Binding HasSelection}"
+                    Classes="Опасная" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Выдача предмета. Раскрывается кнопкой и не занимает место постоянно. -->
+        <Border DockPanel.Dock="Top"
+                Classes="Карточка"
+                Margin="0,0,0,8"
+                IsVisible="{Binding IsPickerOpen}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Получить предмет" Classes="Подзаголовок" />
+
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBox Grid.Column="0" Watermark="Поиск по названию" Text="{Binding PickerSearch}" />
+              <NumericUpDown Grid.Column="1"
+                             Margin="8,0,0,0"
+                             Minimum="1"
+                             Maximum="10000"
+                             Increment="1"
+                             FormatString="0"
+                             Width="130"
+                             Value="{Binding AddCount}" />
+            </Grid>
+
+            <ListBox ItemsSource="{Binding AvailableItems}"
+                     SelectedItem="{Binding SelectedAvailableItem}"
+                     MaxHeight="220"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:CharacterOptionViewModel">
+                  <StackPanel Spacing="2" Margin="2">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding DetailsText}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding HasDetails}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Content="Выдать выбранное"
+                    Command="{Binding AddCommand}"
+                    HorizontalAlignment="Left"
+                    Classes="Основная" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="Карточка" Padding="0">
+          <Panel>
+            <StackPanel IsVisible="{Binding IsEmpty}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Spacing="6"
+                        Margin="16">
+              <TextBlock Text="Предметов нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                         IsVisible="{Binding !IsFiltered}"
+                         Text="Нажмите «Получить предмет»: показаны предметы, созданные в разделе «Контент»." />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                         IsVisible="{Binding IsFiltered}"
+                         Text="Под отбор ничего не подошло. Измените поиск или выберите раздел «Все предметы»." />
+            </StackPanel>
+
+            <!-- Список виртуализирован: инвентарь рассчитан на тысячи записей. -->
+            <ListBox ItemsSource="{Binding Entries}"
+                     SelectedItem="{Binding SelectedEntry}"
+                     IsVisible="{Binding !IsEmpty}"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:InventoryEntryViewModel">
+                  <Grid ColumnDefinitions="*,Auto,Auto" Margin="{Binding Indent}">
+
+                    <StackPanel Grid.Column="0" Spacing="2" Margin="0,2,10,2">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Name}" TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding CountText, StringFormat='×{0}'}"
+                                   Classes="Значение"
+                                   IsVisible="{Binding HasCount}" />
+                        <TextBlock Text="надет"
+                                   Classes="Вторичный"
+                                   IsVisible="{Binding IsEquipped}" />
+                      </StackPanel>
+
+                      <TextBlock Text="{Binding Subtitle}"
+                                 Classes="Вторичный"
+                                 IsVisible="{Binding HasSubtitle}"
+                                 TextWrapping="NoWrap"
+                                 TextTrimming="CharacterEllipsis" />
+
+                      <TextBlock Text="{Binding ContainerText}"
+                                 Classes="Вторичный"
+                                 IsVisible="{Binding IsContainer}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding ChargesText}"
+                               Classes="Значение"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"
+                               IsVisible="{Binding HasCharges}" />
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                      <TextBlock Text="{Binding WeightText}"
+                                 Classes="Значение"
+                                 HorizontalAlignment="Right"
+                                 IsVisible="{Binding HasWeight}" />
+                      <TextBlock Text="{Binding PriceText}"
+                                 Classes="Вторичный"
+                                 HorizontalAlignment="Right"
+                                 IsVisible="{Binding HasPrice}" />
+                    </StackPanel>
+
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Panel>
+        </Border>
+      </DockPanel>
+
+      <GridSplitter Grid.Column="3" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+      <!-- ===================== Сведения о предмете ===================== -->
+      <Border Grid.Column="4" Classes="Карточка">
+        <DockPanel>
+
+          <!--
+            Действия над предметом связаны с моделью представления инвентаря,
+            поэтому вынесены из области сведений: внутри неё источником данных
+            служит сама запись, а не инвентарь.
+          -->
+          <StackPanel DockPanel.Dock="Bottom"
+                      Spacing="8"
+                      Margin="0,10,0,0"
+                      IsVisible="{Binding HasSelection}">
+            <Border Classes="Разделитель" />
+
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Количество" Classes="Вторичный" VerticalAlignment="Center" />
+              <Button Content="−" Command="{Binding DecreaseCountCommand}" MinWidth="40" />
+              <Button Content="+" Command="{Binding IncreaseCountCommand}" MinWidth="40" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Переложить во вместилище" Classes="Вторичный" />
+              <ItemsControl ItemsSource="{Binding Containers}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="items:InventoryContainerOption">
+                    <Button Content="{Binding Name}"
+                            Margin="0,0,6,6"
+                            Command="{Binding $parent[ItemsControl].((vm:InventoryViewModel)DataContext).MoveCommand}"
+                            CommandParameter="{Binding}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </StackPanel>
+
+          <Panel>
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       IsVisible="{Binding !HasSelection}"
+                       Text="Выберите предмет, чтобы увидеть его сведения и действия над ним." />
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          IsVisible="{Binding HasSelection}">
+            <StackPanel Spacing="10" DataContext="{Binding SelectedEntry}"
+                        x:DataType="vm:InventoryEntryViewModel">
+
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Name}" Classes="Подзаголовок" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Subtitle}"
+                           Classes="Вторичный"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding HasSubtitle}" />
+              </StackPanel>
+
+              <TextBlock Text="{Binding Description}"
+                         TextWrapping="Wrap"
+                         IsVisible="{Binding HasDescription}" />
+
+              <Border Classes="Разделитель" />
+
+              <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Количество" Classes="Вторичный" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CountText}" Classes="Значение" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Вес" Classes="Вторичный" Margin="0,4,0,0" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WeightText}" Classes="Значение" Margin="0,4,0,0" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Стоимость" Classes="Вторичный" Margin="0,4,0,0" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PriceText}" Classes="Значение" Margin="0,4,0,0" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Заряды" Classes="Вторичный" Margin="0,4,0,0"
+                           IsVisible="{Binding HasCharges}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ChargesText}" Classes="Значение" Margin="0,4,0,0"
+                           IsVisible="{Binding HasCharges}" />
+              </Grid>
+
+              <TextBlock Text="{Binding ContainerText}"
+                         Classes="Вторичный"
+                         IsVisible="{Binding IsContainer}" />
+
+              <TextBlock Text="Во вместилище больше, чем оно вмещает."
+                         Foreground="{DynamicResource AppWarningBrush}"
+                         TextWrapping="Wrap"
+                         IsVisible="{Binding IsOverfilled}" />
+
+              <TextBlock Text="{Binding UnusableReason}"
+                         Foreground="{DynamicResource AppWarningBrush}"
+                         TextWrapping="Wrap"
+                         FontSize="{DynamicResource AppFontSizeSmall}"
+                         IsVisible="{Binding HasUnusableReason}" />
+
+              <TextBlock Text="{Binding Note}"
+                           Classes="Вторичный"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding HasNote}" />
+              </StackPanel>
+            </ScrollViewer>
+          </Panel>
+        </DockPanel>
+      </Border>
+
+    </Grid>
+  </DockPanel>
+
+</UserControl>

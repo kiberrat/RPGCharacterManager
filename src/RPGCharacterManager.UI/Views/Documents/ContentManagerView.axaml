@@ -1,0 +1,296 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Content;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.ContentManagerView"
+             x:DataType="vm:ContentManagerViewModel">
+
+  <Grid ColumnDefinitions="240,4,320,4,*">
+
+    <!-- ===================== Виды контента ===================== -->
+    <DockPanel Grid.Column="0" Margin="12,12,0,12">
+      <TextBlock DockPanel.Dock="Top" Text="Виды контента" Classes="Вторичный" Margin="0,0,0,6" />
+
+      <Border Classes="Карточка" Padding="0">
+        <ListBox ItemsSource="{Binding Types}"
+                 SelectedItem="{Binding SelectedType}"
+                 Background="Transparent"
+                 BorderThickness="0">
+          <ListBox.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ListBox.ItemsPanel>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="core:IContentTypeDescriptor">
+              <TextBlock Text="{Binding DisplayName}" Margin="2" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+    </DockPanel>
+
+    <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+    <!-- ===================== Список объектов ===================== -->
+    <DockPanel Grid.Column="2" Margin="0,12,0,12" IsVisible="{Binding IsTypeSelected}">
+
+      <TextBlock DockPanel.Dock="Top"
+                 Text="{Binding SelectedType.Description}"
+                 Classes="Вторичный"
+                 TextWrapping="Wrap"
+                 Margin="0,0,0,8" />
+
+      <TextBox DockPanel.Dock="Top"
+               Watermark="Поиск по названию"
+               Text="{Binding SearchText}"
+               Margin="0,0,0,8" />
+
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8">
+        <Button Content="Создать"
+                Command="{Binding CreateCommand}"
+                Classes="Основная" />
+        <Button Content="Копия"
+                Command="{Binding DuplicateCommand}"
+                IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        <Button Content="Удалить"
+                Command="{Binding DeleteCommand}"
+                IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+
+      <TextBlock DockPanel.Dock="Bottom"
+                 Text="{Binding ListSummary}"
+                 Classes="Вторичный"
+                 Margin="0,8,0,0" />
+
+      <Border Classes="Карточка" Padding="0">
+        <Panel>
+          <StackPanel IsVisible="{Binding IsListEmpty}"
+                      VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" Margin="12">
+            <TextBlock Text="Объектов пока нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+            <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                       Text="Нажмите «Создать», чтобы описать свой объект. Приложение не содержит готового контента — его создаёте вы." />
+          </StackPanel>
+
+          <!--
+            Список виртуализирован: отрисовываются только видимые строки,
+            что позволяет работать с сотнями тысяч объектов.
+          -->
+          <ListBox ItemsSource="{Binding Items}"
+                   SelectedItem="{Binding SelectedItem}"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   IsVisible="{Binding !IsListEmpty}">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="core:ContentItem">
+                <StackPanel Spacing="2" Margin="2">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="системный" Classes="Вторичный" IsVisible="{Binding IsSystem}" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding Description}"
+                             Classes="Вторичный"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Panel>
+      </Border>
+    </DockPanel>
+
+    <GridSplitter Grid.Column="3" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+    <!-- ===================== Форма редактирования ===================== -->
+    <Panel Grid.Column="4" Margin="0,12,12,12">
+
+      <StackPanel IsVisible="{Binding !IsEditorOpen}"
+                  VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" MaxWidth="520">
+        <TextBlock Text="Редактор контента" Classes="Заголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Выберите объект слева или создайте новый. Форма редактирования строится по описанию вида контента, поэтому каждый вид объектов показывает свои поля." />
+      </StackPanel>
+
+      <DockPanel IsVisible="{Binding IsEditorOpen}">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,10">
+          <TextBlock Text="{Binding EditorTitle}" Classes="Подзаголовок" TextWrapping="Wrap" />
+
+          <Border IsVisible="{Binding IsSystemObject}"
+                  Classes="Предупреждение">
+            <TextBlock TextWrapping="Wrap"
+                       Text="Это системный объект: изменить его нельзя. Нажмите «Копия», чтобы создать собственную версию." />
+          </Border>
+
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Content="Сохранить"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding !IsSystemObject}"
+                    Classes="Основная" />
+            <Button Content="Закрыть" Command="{Binding CloseCurrentCommand}" />
+            <TextBlock Classes="Вторичный"
+                       VerticalAlignment="Center"
+                       Text="Есть изменения"
+                       IsVisible="{Binding HasUnsavedChanges}" />
+          </StackPanel>
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+          <ItemsControl ItemsSource="{Binding FieldGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="contentVm:ContentFieldGroupViewModel">
+                <Border Classes="Карточка" Margin="0,0,0,12">
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Title}" Classes="Подзаголовок" />
+
+                    <ItemsControl ItemsSource="{Binding Fields}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="contentVm:ContentFieldViewModel">
+                          <Grid ColumnDefinitions="220,*" Margin="0,4">
+                            <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                              <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                              <TextBlock Text="{Binding Hint}"
+                                         Classes="Вторичный"
+                                         TextWrapping="Wrap"
+                                         IsVisible="{Binding HasHint}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="3">
+                              <TextBox Text="{Binding Text}" IsVisible="{Binding IsText}" />
+
+                              <TextBox Text="{Binding Text}"
+                                       IsVisible="{Binding IsLongText}"
+                                       AcceptsReturn="True"
+                                       MinHeight="90"
+                                       TextWrapping="Wrap" />
+
+                              <ToggleSwitch IsChecked="{Binding BooleanValue}"
+                                            IsVisible="{Binding IsBoolean}"
+                                            OnContent="да"
+                                            OffContent="нет" />
+
+                              <ComboBox ItemsSource="{Binding References}"
+                                        SelectedItem="{Binding SelectedReference}"
+                                        IsVisible="{Binding IsReference}"
+                                        HorizontalAlignment="Stretch" />
+
+                              <ComboBox ItemsSource="{Binding Options}"
+                                        SelectedItem="{Binding SelectedOption}"
+                                        IsVisible="{Binding IsEnumeration}"
+                                        HorizontalAlignment="Stretch" />
+
+                              <TextBlock Text="{Binding Error}"
+                                         IsVisible="{Binding HasError}"
+                                         Foreground="{DynamicResource AppDangerBrush}"
+                                         TextWrapping="Wrap"
+                                         FontSize="{DynamicResource AppFontSizeSmall}" />
+                            </StackPanel>
+                          </Grid>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- ===================== Списки вложенных записей ===================== -->
+          <ItemsControl ItemsSource="{Binding Lists}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="contentVm:ContentListViewModel">
+                <Border Classes="Карточка" Margin="0,0,0,12">
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Title}" Classes="Подзаголовок" />
+                    <TextBlock Text="{Binding Description}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding HasDescription}" />
+
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="contentVm:ContentListRowViewModel">
+                          <Border BorderBrush="{DynamicResource AppBorderBrush}"
+                                  BorderThickness="0,0,0,1"
+                                  Padding="0,0,0,8"
+                                  Margin="0,0,0,8">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <ItemsControl Grid.Column="0" ItemsSource="{Binding Fields}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate x:DataType="contentVm:ContentFieldViewModel">
+                                    <Grid ColumnDefinitions="220,*" Margin="0,3">
+                                      <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                                        <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Hint}"
+                                                   Classes="Вторичный"
+                                                   TextWrapping="Wrap"
+                                                   IsVisible="{Binding HasHint}" />
+                                      </StackPanel>
+
+                                      <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBox Text="{Binding Text}" IsVisible="{Binding IsText}" />
+
+                                        <ToggleSwitch IsChecked="{Binding BooleanValue}"
+                                                      IsVisible="{Binding IsBoolean}"
+                                                      OnContent="да"
+                                                      OffContent="нет" />
+
+                                        <ComboBox ItemsSource="{Binding References}"
+                                                  SelectedItem="{Binding SelectedReference}"
+                                                  IsVisible="{Binding IsReference}"
+                                                  HorizontalAlignment="Stretch" />
+
+                                        <ComboBox ItemsSource="{Binding Options}"
+                                                  SelectedItem="{Binding SelectedOption}"
+                                                  IsVisible="{Binding IsEnumeration}"
+                                                  HorizontalAlignment="Stretch" />
+
+                                        <TextBlock Text="{Binding Error}"
+                                                   IsVisible="{Binding HasError}"
+                                                   Foreground="{DynamicResource AppDangerBrush}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="{DynamicResource AppFontSizeSmall}" />
+                                      </StackPanel>
+                                    </Grid>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+
+                              <Button Grid.Column="1"
+                                      Content="Убрать"
+                                      VerticalAlignment="Top"
+                                      Margin="10,0,0,0"
+                                      Command="{Binding $parent[ItemsControl].((contentVm:ContentListViewModel)DataContext).RemoveCommand}"
+                                      CommandParameter="{Binding}" />
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Button Content="{Binding AddText}"
+                            Command="{Binding AddCommand}"
+                            HorizontalAlignment="Left" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
+    </Panel>
+
+  </Grid>
+
+</UserControl>

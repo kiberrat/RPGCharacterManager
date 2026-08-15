@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.CharacterSheetView"
+             xmlns:controls="clr-namespace:RPGCharacterManager.UI.Controls"
+             xmlns:charactersViews="clr-namespace:RPGCharacterManager.UI.Views.Characters"
+             x:DataType="vm:CharacterSheetViewModel">
+
+  <UserControl.DataTemplates>
+    <!-- Панель строится по своему ключу: перечень ключей ведёт каталог панелей. -->
+    <charactersViews:SheetPanelTemplate />
+  </UserControl.DataTemplates>
+
+  <DockPanel Margin="28,20,28,20">
+
+    <!-- ===================== Заголовок и действия ===================== -->
+    <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,10">
+      <TextBlock Text="{Binding Title}" Classes="Заголовок" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Summary}" Classes="Вторичный" TextWrapping="Wrap" />
+
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Content="Сохранить и пересчитать"
+                Command="{Binding SaveCommand}"
+                Classes="Основная" />
+        <Button Content="Обновить" Command="{Binding ReloadCommand}" />
+        <TextBlock Classes="Вторичный"
+                   VerticalAlignment="Center"
+                   Text="Есть несохранённые изменения"
+                   IsVisible="{Binding HasUnsavedChanges}" />
+      </StackPanel>
+
+      <Border IsVisible="{Binding HasProficiencyBonus}" Classes="Карточка">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Бонус мастерства" Classes="Подзаголовок" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBox Width="90"
+                     Text="{Binding ProficiencyBonusText}"
+                     Watermark="Например, +9" />
+            <Button Content="Применить и пересчитать"
+                    Command="{Binding SaveCommand}"
+                    Classes="Основная" />
+            <Button Content="Вернуть по уровню"
+                    Command="{Binding ResetProficiencyBonusCommand}"
+                    IsVisible="{Binding HasCustomProficiencyBonus}" />
+          </StackPanel>
+          <TextBlock Text="{Binding ProficiencyBonusMode}"
+                     Classes="Вторичный"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+
+      <Border IsVisible="{Binding HasIssues}"
+              Classes="Предупреждение">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Замечания расчёта" Classes="Подзаголовок" />
+          <ItemsControl ItemsSource="{Binding Issues}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <!--
+      Лист собирается по макету: вкладки и стоящие на них панели заданы
+      разделом «Интерфейс», а не этой разметкой (решение Р-93).
+    -->
+    <TabControl ItemsSource="{Binding Tabs}">
+      <TabControl.ItemTemplate>
+        <DataTemplate x:DataType="charactersVm:SheetTabViewModel">
+          <TextBlock Text="{Binding Title}" />
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+
+      <TabControl.ContentTemplate>
+        <DataTemplate x:DataType="charactersVm:SheetTabViewModel">
+          <Panel>
+            <TextBlock IsVisible="{Binding IsEmpty}"
+                       Classes="Вторичный"
+                       Margin="0,16,0,0"
+                       TextWrapping="Wrap"
+                       Text="На этой вкладке нет ни одной панели. Поставьте панели в разделе «Интерфейс»." />
+
+            <!--
+              Панели вкладки делят её ширину пропорционально своим долям:
+              так задаётся размер, а порядок в списке — расположение.
+            -->
+            <ItemsControl ItemsSource="{Binding Panels}" IsVisible="{Binding !IsEmpty}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <controls:SharePanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="charactersVm:SheetPanelViewModel">
+                  <ContentControl Content="{Binding}" Margin="0,0,10,0" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Panel>
+        </DataTemplate>
+      </TabControl.ContentTemplate>
+    </TabControl>
+  </DockPanel>
+
+</UserControl>

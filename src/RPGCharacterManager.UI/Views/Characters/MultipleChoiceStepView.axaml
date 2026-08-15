@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Characters;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RPGCharacterManager.UI.Views.Characters.MultipleChoiceStepView"
+             x:DataType="vm:MultipleChoiceStepViewModel">
+
+  <DockPanel>
+
+    <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+      <TextBox Watermark="Поиск по названию" Text="{Binding SearchText}" />
+
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <CheckBox Content="Показывать недоступные" IsChecked="{Binding ShowUnavailable}" />
+        <Button Content="Снять выбор" Command="{Binding ClearSelectionCommand}" />
+        <TextBlock Text="{Binding SelectionSummary}" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding Summary}" Classes="Вторичный" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <Border IsVisible="{Binding IsLimitExceeded}"
+              Background="{DynamicResource AppSurfaceBrush}"
+              BorderBrush="{DynamicResource AppDangerBrush}"
+              BorderThickness="1"
+              CornerRadius="{DynamicResource AppCornerRadius}"
+              Padding="10">
+        <TextBlock TextWrapping="Wrap"
+                   Text="Выбрано больше объектов, чем допускает игровая система. Снимите лишние отметки." />
+      </Border>
+    </StackPanel>
+
+    <Border Classes="Карточка" Padding="0">
+      <Panel>
+        <StackPanel IsVisible="{Binding IsEmpty}"
+                    VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" Margin="16">
+          <TextBlock Text="Подходящих объектов нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
+                     Text="Создайте объекты этого вида в разделе «Контент» либо смените игровую систему и источники на первом шаге. Шаг можно пропустить." />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsEmpty}">
+          <ItemsControl ItemsSource="{Binding Options}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:CharacterOptionViewModel">
+                <CheckBox IsChecked="{Binding IsSelected}"
+                          IsEnabled="{Binding IsAvailable}"
+                          Margin="4,3"
+                          VerticalContentAlignment="Top">
+                  <StackPanel Spacing="3">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+
+                    <TextBlock Text="{Binding Description}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               MaxLines="3"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding HasDescription}" />
+
+                    <ItemsControl ItemsSource="{Binding Details}" IsVisible="{Binding HasDetails}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="core:CharacterOptionDetail">
+                          <Border Background="{DynamicResource AppSurfaceRaisedBrush}"
+                                  CornerRadius="{DynamicResource AppCornerRadius}"
+                                  Padding="6,2"
+                                  Margin="0,0,6,4">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                              <TextBlock Text="{Binding Label}" Classes="Вторичный" />
+                              <TextBlock Text="{Binding Value}" />
+                            </StackPanel>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding UnavailableReason}"
+                               IsVisible="{Binding HasUnavailableReason}"
+                               Foreground="{DynamicResource AppWarningBrush}"
+                               TextWrapping="Wrap"
+                               FontSize="{DynamicResource AppFontSizeSmall}" />
+                  </StackPanel>
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Panel>
+    </Border>
+
+  </DockPanel>
+
+</UserControl>

@@ -1,0 +1,348 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:ai="clr-namespace:RPGCharacterManager.Core.Abstractions.Ai;assembly=RPGCharacterManager.Core"
+             xmlns:model="clr-namespace:RPGCharacterManager.Core.Models.Ai;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="860"
+             x:Class="RPGCharacterManager.UI.Views.Documents.AiView"
+             x:DataType="vm:AiViewModel">
+
+  <UserControl.Styles>
+    <!-- Состояние связи показано точкой: цвет виден раньше, чем прочитан текст. -->
+    <Style Selector="Border.Огонёк">
+      <Setter Property="Width" Value="9" />
+      <Setter Property="Height" Value="9" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Background" Value="{DynamicResource AppTextDisabledBrush}" />
+    </Style>
+
+    <Style Selector="Border.Огонёк.Связь">
+      <Setter Property="Background" Value="{DynamicResource AppSuccessBrush}" />
+    </Style>
+
+    <Style Selector="Border.Огонёк.Сбой">
+      <Setter Property="Background" Value="{DynamicResource AppDangerBrush}" />
+    </Style>
+
+    <!-- Сообщение беседы. Реплика пользователя выделена подложкой акцента. -->
+    <Style Selector="Border.Реплика">
+      <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+      <Setter Property="CornerRadius" Value="{DynamicResource AppCornerRadiusLarge}" />
+      <Setter Property="Padding" Value="16,12" />
+      <Setter Property="Margin" Value="0,0,0,10" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style Selector="Border.Реплика.Моя">
+      <Setter Property="Background" Value="{DynamicResource AppAccentSoftBrush}" />
+      <Setter Property="Margin" Value="60,0,0,10" />
+    </Style>
+
+    <Style Selector="Border.Реплика.Сбой">
+      <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AppDangerBrush}" />
+      <Setter Property="BorderThickness" Value="3,0,0,0" />
+    </Style>
+
+    <!-- Кнопка возможности: подсказка, а не действие, поэтому без рамки и во всю ширину. -->
+    <Style Selector="Button.Возможность">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="MinHeight" Value="0" />
+    </Style>
+
+    <Style Selector="Button.Возможность:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AppSelectionBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel>
+
+    <!-- ===================== Заголовок и состояние связи ===================== -->
+    <StackPanel DockPanel.Dock="Top" Margin="28,24,28,14" Spacing="12">
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="AI" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   Text="Помощник читает вашу базу и предлагает изменения. Ничего не меняется, пока вы не нажмёте «Применить»." />
+      </StackPanel>
+
+      <Grid ColumnDefinitions="*,10,Auto,10,Auto">
+        <Border Grid.Column="0" Classes="Подсказка" Padding="12,8">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Border Classes="Огонёк"
+                    Classes.Связь="{Binding IsConnected}"
+                    Classes.Сбой="{Binding IsConnectionFailed}" />
+            <TextBlock Text="{Binding ConnectionText}"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <Button Grid.Column="2"
+                Content="Проверить связь"
+                Command="{Binding CheckConnectionCommand}"
+                ToolTip.Tip="Обращается к службе настоящим запросом и показывает, что ответила модель" />
+
+        <ComboBox Grid.Column="4"
+                  MinWidth="200"
+                  ItemsSource="{Binding Characters}"
+                  SelectedItem="{Binding SelectedCharacter}"
+                  ToolTip.Tip="Помощник будет учитывать этого персонажа в советах">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:AiCharacterOption">
+              <TextBlock Text="{Binding Name}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </Grid>
+    </StackPanel>
+
+    <!-- ===================== Ввод вопроса ===================== -->
+    <Border DockPanel.Dock="Bottom" Margin="28,0,28,20">
+      <StackPanel Spacing="8">
+        <TextBlock Text="{Binding ProgressText}"
+                   Classes="Вторичный"
+                   IsVisible="{Binding ProgressText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+        <Grid ColumnDefinitions="*,10,Auto">
+          <TextBox Grid.Column="0"
+                   Text="{Binding Question}"
+                   AcceptsReturn="True"
+                   TextWrapping="Wrap"
+                   MinHeight="64"
+                   MaxHeight="160"
+                   IsEnabled="{Binding !IsBusy}"
+                   Watermark="Спросите что-нибудь: «Создай заклинание…», «Проверь базу», «Что взять на уровне?»" />
+
+          <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Bottom">
+            <Button Content="Отправить"
+                    Classes="Основная"
+                    MinWidth="130"
+                    IsVisible="{Binding !IsBusy}"
+                    Command="{Binding SendCommand}" />
+
+            <Button Content="Остановить"
+                    MinWidth="130"
+                    IsVisible="{Binding IsBusy}"
+                    Command="{Binding SendCancelCommand}" />
+
+            <Button Content="Очистить беседу"
+                    Classes="Тихая"
+                    MinWidth="130"
+                    Command="{Binding ClearCommand}" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </Border>
+
+    <!-- ===================== Возможности и книги ===================== -->
+    <Border DockPanel.Dock="Left" Width="272" Margin="28,0,0,14" Classes="Карточка" Padding="8,12">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10">
+
+          <TextBlock Text="О чём можно попросить" Classes="Рубрика" Margin="10,0,10,0" />
+
+          <!--
+            Перечень возможностей берётся прямо из модели предметной области:
+            тот же список получает языковая модель в своих указаниях, поэтому
+            подсказка на экране не может разойтись с тем, что помощник умеет.
+          -->
+          <ItemsControl ItemsSource="{x:Static model:AiCapabilities.All}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="model:AiCapability">
+                <Button Classes="Возможность"
+                        Command="{Binding $parent[ItemsControl].((vm:AiViewModel)DataContext).UseCapabilityCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="{Binding Example}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Title}" />
+                    <TextBlock Text="{Binding Hint}" Classes="Вторичный" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Border Classes="Разделитель" Margin="10,4" />
+
+          <StackPanel Spacing="8" Margin="10,0">
+            <TextBlock Text="Импорт документов" Classes="Рубрика" />
+
+            <Button Content="Выбрать файл…"
+                    Classes="Основная"
+                    HorizontalAlignment="Stretch"
+                    ToolTip.Tip="Книга, документ или чужая база данных в любом месте на диске"
+                    Command="{Binding PickFileCommand}" />
+
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding HasNoBooks}"
+                       Text="Либо положите документ в папку — он появится в списке." />
+
+            <ComboBox HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding Books}"
+                      SelectedItem="{Binding SelectedBook}"
+                      IsVisible="{Binding !HasNoBooks}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="ai:AiBook">
+                  <StackPanel Spacing="1">
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding SizeText}" Classes="Вторичный" />
+                  </StackPanel>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <!--
+              Что найдено в документе, показывается до разбора: каждая часть —
+              это обращение к службе, и пользователь вправе знать цену заранее.
+            -->
+            <Border Classes="Подсказка" IsVisible="{Binding HasDocumentSummary}">
+              <TextBlock Text="{Binding DocumentSummary}" Classes="Вторичный" TextWrapping="Wrap" />
+            </Border>
+
+            <Button Content="Распознать объекты"
+                    HorizontalAlignment="Stretch"
+                    IsVisible="{Binding !IsBusy}"
+                    IsEnabled="{Binding !HasNoBooks}"
+                    ToolTip.Tip="Помощник прочитает документ и предложит создать найденные в нём объекты"
+                    Command="{Binding AnalyzeCommand}" />
+
+            <Button Content="Остановить разбор"
+                    HorizontalAlignment="Stretch"
+                    IsVisible="{Binding IsBusy}"
+                    Command="{Binding AnalyzeCancelCommand}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Button Content="Обновить" Classes="Тихая" Command="{Binding RefreshBooksCommand}" />
+              <Button Content="Папка" Classes="Тихая" Command="{Binding OpenBooksFolderCommand}" />
+            </StackPanel>
+
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       Text="{Binding SupportedBooks, StringFormat='Читаются файлы: {0}'}" />
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <!-- ===================== Действия помощника ===================== -->
+    <Border DockPanel.Dock="Right" Width="344" Margin="0,0,28,14" Classes="Карточка" Padding="14,12">
+      <DockPanel>
+
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+          <TextBlock Grid.Column="0" Text="Действия помощника" Classes="Рубрика" VerticalAlignment="Center" />
+          <Button Grid.Column="1"
+                  Content="Применить все"
+                  Classes="Основная"
+                  IsVisible="{Binding HasPendingProposals}"
+                  Command="{Binding ApplyAllCommand}" />
+        </Grid>
+
+        <TextBlock DockPanel.Dock="Top"
+                   Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   IsVisible="{Binding HasNoProposals}"
+                   Text="Здесь появится всё, что помощник предложит создать или изменить. Пока вы не нажмёте «Применить», в базе ничего не меняется." />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding Proposals}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AiProposalViewModel">
+                <Border Classes="Подсказка" Margin="0,0,0,8" Padding="12,10">
+                  <StackPanel Spacing="6">
+
+                    <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" TextWrapping="Wrap" />
+
+                    <ItemsControl ItemsSource="{Binding Changes}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                          <TextBlock Text="{Binding}" Classes="Вторичный" TextWrapping="Wrap" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding StateText}"
+                               Classes="Вторичный"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding !IsPending}" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsPending}">
+                      <Button Content="Применить"
+                              Classes="Основная"
+                              Command="{Binding $parent[ItemsControl].((vm:AiViewModel)DataContext).ApplyCommand}"
+                              CommandParameter="{Binding}" />
+                      <Button Content="Отклонить"
+                              Classes="Тихая"
+                              Command="{Binding $parent[ItemsControl].((vm:AiViewModel)DataContext).RejectCommand}"
+                              CommandParameter="{Binding}" />
+                    </StackPanel>
+
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+      </DockPanel>
+    </Border>
+
+    <!-- ===================== Беседа ===================== -->
+    <Border Margin="14,0,14,14" Classes="Карточка" Padding="16,14">
+      <Panel>
+        <StackPanel IsVisible="{Binding IsEmpty}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Spacing="8"
+                    MaxWidth="460">
+          <TextBlock Text="Спросите помощника" Classes="Подзаголовок" HorizontalAlignment="Center" />
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     TextAlignment="Center"
+                     Text="Слева перечислено, о чём его можно попросить: нажмите строку — готовый запрос подставится в поле ввода." />
+        </StackPanel>
+
+        <ScrollViewer x:Name="ЛентаБеседы"
+                      VerticalScrollBarVisibility="Auto"
+                      IsVisible="{Binding !IsEmpty}">
+          <ItemsControl ItemsSource="{Binding Messages}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AiMessageViewModel">
+                <Border Classes="Реплика"
+                        Classes.Моя="{Binding IsUser}"
+                        Classes.Сбой="{Binding IsApplication}">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding Title}" Classes="Рубрика" />
+                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+
+                    <StackPanel Spacing="2" IsVisible="{Binding HasSteps}" Margin="0,4,0,0">
+                      <ItemsControl ItemsSource="{Binding Steps}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{Binding}" Classes="Вторичный" TextWrapping="Wrap" />
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Panel>
+    </Border>
+
+  </DockPanel>
+
+</UserControl>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Режим мастера: ведение игровой сессии за всех персонажей сразу.
+
+    Подсистема ничего не считает сама. Наложение эффекта выполняет служба
+    эффектов, инициативу вычисляет единый движок формул, а изменение ресурса
+    записывается в тот же журнал, что и любое другое. Режим мастера повторяет
+    действие для нескольких персонажей и собирает общую сводку — не более.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Master</RootNamespace>
+    <Description>Режим мастера: сводка по персонажам, массовые изменения и очередь хода.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

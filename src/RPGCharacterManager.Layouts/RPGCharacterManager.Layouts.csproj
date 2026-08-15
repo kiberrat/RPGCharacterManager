@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Макеты интерфейса.
+
+    Расположение панелей по вкладкам листа персонажа хранится в базе, а не в
+    разметке. Перечень самих панелей подсистеме неизвестен: его даёт каталог,
+    который наполняют подсистемы интерфейса, поэтому новая панель становится
+    доступна макетам без изменения этого проекта.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Layouts</RootNamespace>
+    <Description>Макеты интерфейса: вкладки, панели, размеры и расположение.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

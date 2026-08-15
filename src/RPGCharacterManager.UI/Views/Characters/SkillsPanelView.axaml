@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.SkillsPanelView"
+             x:DataType="charactersVm:SheetPanelViewModel">
+
+  <!-- навыки персонажа. -->
+  <Panel DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel">
+  <DockPanel Margin="0,10,0,0">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Content="Добавить навык" Command="{Binding ToggleSkillPickerCommand}" />
+        <TextBlock Classes="Вторичный" VerticalAlignment="Center"
+                   Text="Спасброски — навыки категории «Спасброски»; они показываются первыми." />
+      </StackPanel>
+
+      <Border Classes="Карточка" IsVisible="{Binding IsSkillPickerOpen}">
+        <StackPanel Spacing="8">
+          <TextBox Watermark="Поиск по названию" Text="{Binding SkillSearch}" />
+          <ListBox ItemsSource="{Binding AvailableSkills}"
+                   SelectedItem="{Binding SelectedAvailableSkill}"
+                   MaxHeight="220"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:CharacterOptionViewModel">
+                <StackPanel Spacing="2" Margin="2">
+                  <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding UnavailableReason}"
+                             IsVisible="{Binding HasUnavailableReason}"
+                             Foreground="{DynamicResource AppWarningBrush}"
+                             TextWrapping="Wrap"
+                             FontSize="{DynamicResource AppFontSizeSmall}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <Button Content="Добавить выбранный"
+                  Command="{Binding AddSkillCommand}"
+                  HorizontalAlignment="Left" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <Border Classes="Карточка">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     IsVisible="{Binding HasNoSkills}"
+                     Text="Персонаж не владеет навыками. Нажмите «Добавить навык»." />
+
+          <ItemsControl ItemsSource="{Binding SkillGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:SheetSkillGroupViewModel">
+                <StackPanel Spacing="4" Margin="0,0,0,10">
+                  <TextBlock Text="{Binding Title}" Classes="Подзаголовок" />
+
+                  <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="charactersVm:SheetSkillRowViewModel">
+                        <Grid ColumnDefinitions="240,100,100,*,Auto" Margin="0,3">
+                          <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Hint}"
+                                       Classes="Вторичный"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding HasHint}" />
+                          </StackPanel>
+
+                          <TextBox Grid.Column="1" Text="{Binding ProficiencyText}"
+                                   Watermark="владение" />
+                          <TextBox Grid.Column="2" Text="{Binding BonusText}"
+                                   Margin="6,0,0,0" Watermark="бонус" />
+
+                          <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4"
+                                      Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="итог" Classes="Вторичный" />
+                            <TextBlock Text="{Binding Value}" />
+                          </StackPanel>
+
+                          <Button Grid.Column="4"
+                                  Content="Убрать"
+                                  VerticalAlignment="Center"
+                                  Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.RemoveSkillCommand}"
+                                  CommandParameter="{Binding}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </DockPanel>
+  </Panel>
+</UserControl>

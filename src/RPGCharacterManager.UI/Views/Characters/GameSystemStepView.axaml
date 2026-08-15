@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Characters;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RPGCharacterManager.UI.Views.Characters.GameSystemStepView"
+             x:DataType="vm:GameSystemStepViewModel">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="12">
+
+      <!-- ===================== Игровая система ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Игровая система" Classes="Подзаголовок" />
+
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     Text="Мастер покажет объекты выбранной системы и объекты, не привязанные ни к одной системе." />
+
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     IsVisible="{Binding HasNoGameSystems}"
+                     Text="Игровые системы ещё не созданы. Персонаж будет использовать контент, не привязанный к системе. Создать систему можно в разделе «Контент»." />
+
+          <ListBox ItemsSource="{Binding GameSystems}"
+                   SelectedItem="{Binding SelectedGameSystem}"
+                   IsVisible="{Binding !HasNoGameSystems}"
+                   MaxHeight="220"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="core:GameSystemOption">
+                <StackPanel Spacing="2" Margin="2">
+                  <TextBlock Text="{Binding Name}" />
+                  <TextBlock Text="{Binding Description}"
+                             Classes="Вторичный"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Источники ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Источники контента" Classes="Подзаголовок" />
+
+          <CheckBox Content="Использовать весь доступный контент"
+                    IsChecked="{Binding UseAllSources}" />
+
+          <TextBlock Text="{Binding Summary}" Classes="Вторичный" TextWrapping="Wrap" />
+
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     IsVisible="{Binding HasNoSources}"
+                     Text="Контент-паки не созданы. Ограничивать источники не требуется." />
+
+          <ItemsControl ItemsSource="{Binding Sources}"
+                        IsEnabled="{Binding IsSourceSelectionEnabled}"
+                        IsVisible="{Binding !HasNoSources}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ContentSourceViewModel">
+                <CheckBox IsChecked="{Binding IsEnabled}" Margin="0,2">
+                  <StackPanel Spacing="1">
+                    <TextBlock Text="{Binding Name}" />
+                    <TextBlock Text="{Binding Description}"
+                               Classes="Вторичный"
+                               TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+
+</UserControl>

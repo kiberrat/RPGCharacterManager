@@ -1,0 +1,50 @@
+<Project>
+
+  <!--
+    Общие настройки сборки для всех проектов решения RPG Character Manager.
+    Единое место определения целевой платформы, языковых возможностей и правил качества кода.
+  -->
+
+  <PropertyGroup>
+    <!--
+      Каталог артефактов сборки вынесен за пределы каталога решения.
+
+      Причина: решение расположено внутри папки, синхронизируемой OneDrive.
+      Постоянная синхронизация промежуточных файлов obj/bin приводит к блокировкам
+      файлов и случайным ошибкам MSBuild. Путь можно переопределить, задав
+      свойство ArtifactsPath при вызове сборки.
+    -->
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <ArtifactsPath Condition="'$(ArtifactsPath)' == ''">$(LocalAppData)\RPGCharacterManager\artifacts</ArtifactsPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      STYLE_GUIDE требует XML-комментарии для всех публичных членов.
+      CS1591 (отсутствует XML-комментарий) поднят до уровня ошибки, чтобы
+      требование проверялось компилятором, а не ревью.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>RPG Character Manager</Product>
+    <Company>RPG Character Manager</Company>
+    <Authors>RPG Character Manager</Authors>
+    <Version>1.0.0</Version>
+    <NeutralLanguage>ru-RU</NeutralLanguage>
+    <Copyright>© 2026 RPG Character Manager</Copyright>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Менеджер кампаний.
+
+    Кампания хранит не игровые объекты, а ссылки на них: один и тот же монстр,
+    квест или локация участвуют в любом числе игр, оставаясь единственной записью.
+    Вид объекта хранится идентификатором, поэтому новый вид контента становится
+    доступен кампаниям без изменения схемы базы данных.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Campaigns</RootNamespace>
+    <Description>Кампании: состав, хронология и связь с игровыми объектами.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

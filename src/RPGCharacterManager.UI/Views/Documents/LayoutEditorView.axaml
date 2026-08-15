@@ -1,0 +1,195 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:layouts="clr-namespace:RPGCharacterManager.Core.Abstractions.Layouts;assembly=RPGCharacterManager.Core"
+             xmlns:behaviors="clr-namespace:RPGCharacterManager.UI.Behaviors"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.LayoutEditorView"
+             x:DataType="vm:LayoutEditorViewModel">
+
+  <Grid ColumnDefinitions="280,*" Margin="{DynamicResource AppDocumentPadding}">
+
+    <!-- ===================== Макеты ===================== -->
+    <DockPanel Grid.Column="0" Margin="0,0,18,0">
+
+      <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,12">
+        <TextBlock Text="Интерфейс" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   Text="Макет задаёт вкладки листа персонажа и расставленные по ним панели." />
+
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button Content="Новый макет" Classes="Основная" Command="{Binding CreateCommand}" />
+          <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Classes="Карточка" Padding="0">
+        <ListBox ItemsSource="{Binding Layouts}"
+                 SelectedItem="{Binding SelectedLayout}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 SelectionMode="Single">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="layouts:LayoutListItem">
+              <StackPanel Spacing="2" Margin="0,3">
+                <TextBlock Text="{Binding Name}"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Classes="Вторичный">
+                  <Run Text="вкладок:" />
+                  <Run Text="{Binding TabCount}" />
+                  <Run Text="· панелей:" />
+                  <Run Text="{Binding PanelCount}" />
+                </TextBlock>
+                <TextBlock Text="применён"
+                           Classes="Вторичный"
+                           IsVisible="{Binding IsDefault}" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+    </DockPanel>
+
+    <!-- ===================== Вкладки и панели ===================== -->
+    <Panel Grid.Column="1">
+
+      <StackPanel IsVisible="{Binding !IsLayoutOpen}"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center"
+                  Spacing="6"
+                  MaxWidth="520">
+        <TextBlock Text="Макет не выбран" Classes="Подзаголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Text="Выберите макет слева либо создайте новый: он получится копией выбранного." />
+      </StackPanel>
+
+      <DockPanel IsVisible="{Binding IsLayoutOpen}">
+
+        <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,12">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBox Text="{Binding LayoutName}" Width="240" Watermark="Название макета" />
+            <Button Content="Переименовать" Command="{Binding RenameCommand}" />
+            <Button Content="Применить" Classes="Основная" Command="{Binding ApplyCommand}" />
+            <Button Content="Удалить" Classes="Опасная" Command="{Binding DeleteCommand}" />
+          </StackPanel>
+
+          <TextBlock Text="{Binding Summary}" Classes="Вторичный" />
+
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBox Text="{Binding NewTabTitle}" Width="200" Watermark="Заголовок вкладки" />
+            <Button Content="Добавить вкладку" Command="{Binding AddTabCommand}" />
+
+            <ComboBox ItemsSource="{Binding AvailablePanels}"
+                      SelectedItem="{Binding SelectedAvailablePanel}"
+                      MinWidth="220"
+                      Margin="16,0,0,0">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="layouts:SheetPanelDescriptor">
+                  <TextBlock Text="{Binding Title}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button Content="Поставить на вкладку"
+                    Command="{Binding AddPanelCommand}"
+                    CommandParameter="{Binding SelectedTab}" />
+          </StackPanel>
+
+          <TextBlock Classes="Вторичный"
+                     TextWrapping="Wrap"
+                     Text="Панели перетаскиваются мышью — и внутри вкладки, и на соседнюю. Ширина задаётся долей: две панели с долями 1 и 2 займут треть и две трети вкладки." />
+        </StackPanel>
+
+        <!-- Вкладки макета столбцами: перетаскивание между ними и есть расположение. -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding Tabs}"
+                        behaviors:PanelDragDrop.Command="{Binding DropPanelCommand}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:LayoutTabRowViewModel">
+                <Border Classes="Карточка" Width="300" Margin="0,0,12,0" VerticalAlignment="Top">
+                  <DockPanel>
+
+                    <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,10">
+                      <TextBox Text="{Binding Title}" Watermark="Заголовок вкладки" />
+
+                      <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button Content="Сохранить"
+                                IsVisible="{Binding IsChanged}"
+                                Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).RenameTabCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="←"
+                                Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).MoveTabLeftCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="→"
+                                Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).MoveTabRightCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="Удалить"
+                                Classes="Опасная"
+                                Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).DeleteTabCommand}"
+                                CommandParameter="{Binding}" />
+                      </StackPanel>
+                    </StackPanel>
+
+                    <TextBlock DockPanel.Dock="Bottom"
+                               Classes="Вторичный"
+                               IsVisible="{Binding IsEmpty}"
+                               TextWrapping="Wrap"
+                               Text="Панелей нет. Перетащите панель сюда либо поставьте её кнопкой выше." />
+
+                    <ListBox ItemsSource="{Binding Panels}"
+                             MinHeight="120"
+                             Background="Transparent"
+                             BorderThickness="0">
+                      <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LayoutPanelRowViewModel">
+                          <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                              <TextBlock Text="{Binding Title}"
+                                         TextWrapping="NoWrap"
+                                         TextTrimming="CharacterEllipsis" />
+                              <TextBlock Classes="Вторичный" FontSize="11">
+                                <Run Text="доля:" />
+                                <Run Text="{Binding WidthText}" />
+                              </TextBlock>
+                              <TextBlock Text="панели больше нет"
+                                         Classes="Вторичный"
+                                         FontSize="11"
+                                         IsVisible="{Binding IsMissing}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                              <Button Content="−"
+                                      Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).NarrowPanelCommand}"
+                                      CommandParameter="{Binding}" />
+                              <Button Content="+"
+                                      Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).WidenPanelCommand}"
+                                      CommandParameter="{Binding}" />
+                              <Button Content="✕"
+                                      Command="{Binding $parent[UserControl].((vm:LayoutEditorViewModel)DataContext).RemovePanelCommand}"
+                                      CommandParameter="{Binding}" />
+                            </StackPanel>
+                          </Grid>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
+                  </DockPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+    </Panel>
+  </Grid>
+</UserControl>

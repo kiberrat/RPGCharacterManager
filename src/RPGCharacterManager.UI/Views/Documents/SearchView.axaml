@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:search="clr-namespace:RPGCharacterManager.Core.Abstractions.Search;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.SearchView"
+             x:DataType="vm:SearchViewModel">
+
+  <DockPanel Margin="{DynamicResource AppDocumentPadding}">
+
+    <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,14">
+      <TextBlock Text="Поиск" Classes="Заголовок" />
+
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBox Grid.Column="0"
+                 Text="{Binding Query}"
+                 Watermark="Что найти: персонажа, заклинание, предмет, монстра, кампанию или запись журнала">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding FindCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
+
+        <Button Grid.Column="1"
+                Content="Найти"
+                Classes="Основная"
+                Margin="8,0,0,0"
+                Command="{Binding FindCommand}" />
+
+        <Button Grid.Column="2"
+                Content="Очистить"
+                Margin="6,0,0,0"
+                Command="{Binding ClearCommand}" />
+      </Grid>
+
+      <TextBlock Text="{Binding Summary}"
+                 Classes="Вторичный"
+                 TextWrapping="Wrap"
+                 IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+
+    <Panel>
+      <StackPanel IsVisible="{Binding !HasSearched}"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center"
+                  Spacing="6"
+                  MaxWidth="560">
+        <TextBlock Text="Поиск по всему приложению" Classes="Подзаголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Text="Ищутся персонажи, кампании, записи журнала и игровой контент всех видов — заклинания, предметы, черты, монстры и остальные. Регистр не важен." />
+      </StackPanel>
+
+      <ScrollViewer IsVisible="{Binding HasSearched}">
+        <ItemsControl ItemsSource="{Binding Groups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="search:SearchGroup">
+              <Border Classes="Карточка" Margin="0,0,0,12">
+                <StackPanel Spacing="8">
+
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="{Binding Title}" Classes="Подзаголовок" />
+                    <TextBlock Text="{Binding Caption}" Classes="Вторичный" VerticalAlignment="Center" />
+                  </StackPanel>
+
+                  <ItemsControl ItemsSource="{Binding Hits}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="search:SearchHit">
+                        <Button Classes="Тихая"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Margin="0,0,0,2"
+                                Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).OpenCommand}"
+                                CommandParameter="{Binding}">
+                          <StackPanel Spacing="1">
+                            <TextBlock Text="{Binding Title}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Subtitle}"
+                                       Classes="Вторичный"
+                                       FontSize="12"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       IsVisible="{Binding HasSubtitle}" />
+                          </StackPanel>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+  </DockPanel>
+</UserControl>

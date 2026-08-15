@@ -1,0 +1,248 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:rulesVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Rules"
+             xmlns:views="clr-namespace:RPGCharacterManager.UI.Views.Rules"
+             xmlns:macros="clr-namespace:RPGCharacterManager.Core.Abstractions.Macros;assembly=RPGCharacterManager.Core"
+             xmlns:characters="clr-namespace:RPGCharacterManager.Core.Abstractions.Characters;assembly=RPGCharacterManager.Core"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Rules;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.MacrosView"
+             x:DataType="vm:MacrosViewModel">
+
+  <Grid ColumnDefinitions="300,*" Margin="{DynamicResource AppDocumentPadding}">
+
+    <!-- ===================== Список макросов ===================== -->
+    <DockPanel Grid.Column="0" Margin="0,0,18,0">
+
+      <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,12">
+        <TextBlock Text="Макросы" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   Text="Макрос — последовательность действий, которую запускаете вы. Условия и действия те же, что у игровых правил." />
+
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button Content="Новый макрос" Classes="Основная" Command="{Binding CreateCommand}" />
+          <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Classes="Карточка" Padding="0">
+        <Panel>
+          <TextBlock IsVisible="{Binding IsListEmpty}"
+                     Classes="Вторичный"
+                     Margin="16"
+                     TextWrapping="Wrap"
+                     Text="Макросов пока нет. Создайте первый: например, «Второе дыхание» — восстановить здоровье и списать использование." />
+
+          <ListBox ItemsSource="{Binding Macros}"
+                   SelectedItem="{Binding SelectedMacro}"
+                   IsVisible="{Binding !IsListEmpty}"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   SelectionMode="Single">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="macros:MacroListItem">
+                <StackPanel Spacing="2" Margin="0,3">
+                  <TextBlock Text="{Binding Name}"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Summary}" Classes="Вторичный" />
+                  <TextBlock Text="{Binding Hotkey}"
+                             Classes="Вторичный"
+                             IsVisible="{Binding HasHotkey}" />
+                  <TextBlock Text="выключен"
+                             Classes="Вторичный"
+                             IsVisible="{Binding !Enabled}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Panel>
+      </Border>
+    </DockPanel>
+
+    <!-- ===================== Редактор макроса ===================== -->
+    <Panel Grid.Column="1">
+
+      <StackPanel IsVisible="{Binding !IsMacroOpen}"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center"
+                  Spacing="6"
+                  MaxWidth="540">
+        <TextBlock Text="Макрос не выбран" Classes="Подзаголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Text="Макрос собирается из тех же действий, что и правило: изменить значение, потратить ресурс, наложить эффект. Разница в том, что правило запускает событие, а макрос — вы." />
+      </StackPanel>
+
+      <ScrollViewer IsVisible="{Binding IsMacroOpen}">
+        <StackPanel Spacing="12">
+
+          <!-- Сведения о макросе -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="Макрос" Classes="Подзаголовок" />
+                <TextBlock Grid.Column="1"
+                           Classes="Вторичный"
+                           Text="есть несохранённые изменения"
+                           IsVisible="{Binding HasUnsavedChanges}" />
+              </Grid>
+
+              <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Название" VerticalAlignment="Center" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name}" Margin="0,3" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Описание" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Description}" Margin="0,3" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Категория" VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1"
+                         Text="{Binding Category}"
+                         Watermark="Например: бой, отдых, магия"
+                         Margin="0,3" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Горячая клавиша" VerticalAlignment="Center" />
+                <TextBox Grid.Row="3" Grid.Column="1"
+                         Text="{Binding Hotkey}"
+                         Watermark="Например: Ctrl+1 — пусто, если клавиша не нужна"
+                         Margin="0,3" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Доступен к запуску" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Row="4" Grid.Column="1"
+                              IsChecked="{Binding Enabled}"
+                              OnContent="да"
+                              OffContent="нет"
+                              Margin="0,3" />
+              </Grid>
+
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="Горячая клавиша выполняет макрос над персонажем открытого листа. Одно сочетание принадлежит одному макросу." />
+
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="Сохранить" Classes="Основная" Command="{Binding SaveCommand}" />
+                <Button Content="Удалить" Classes="Опасная" Command="{Binding DeleteCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Условия -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Условия" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="Если условия не выполнены, макрос ничего не делает. В обеих частях сравнения допустимы формулы: Сила + Уровень, 2к6, Максимум(Сила; Ловкость)." />
+              <ContentControl Content="{Binding ConditionRoot}">
+                <ContentControl.ContentTemplate>
+                  <DataTemplate x:DataType="rulesVm:ConditionNodeViewModel">
+                    <views:ConditionNodeView />
+                  </DataTemplate>
+                </ContentControl.ContentTemplate>
+              </ContentControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Действия -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Действия" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="Выполняются сверху вниз. Перечень действий тот же, что у правил: обработчик, добавленный подсистемой, доступен и здесь." />
+
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <ComboBox MinWidth="260"
+                          ItemsSource="{Binding AvailableActionKinds}"
+                          SelectedItem="{Binding SelectedActionKind}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="core:IRuleActionHandler">
+                      <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="Добавить действие" Command="{Binding AddActionCommand}" />
+              </StackPanel>
+
+              <TextBlock Classes="Вторичный"
+                         Text="Действий пока нет."
+                         IsVisible="{Binding !Actions.Count}" />
+
+              <ItemsControl ItemsSource="{Binding Actions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="rulesVm:ActionEditorViewModel">
+                    <Border BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource AppCornerRadius}"
+                            Background="{DynamicResource AppSurfaceBrush}"
+                            Padding="10"
+                            Margin="0,4">
+                      <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <StackPanel Grid.Column="0" Spacing="1">
+                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Description}" Classes="Вторичный" TextWrapping="Wrap" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Content="↑" ToolTip.Tip="Выполнять раньше" Command="{Binding MoveUpCommand}" />
+                            <Button Content="↓" ToolTip.Tip="Выполнять позже" Command="{Binding MoveDownCommand}" />
+                            <Button Content="✕" ToolTip.Tip="Удалить действие" Command="{Binding RemoveCommand}" />
+                          </StackPanel>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding Parameters}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="rulesVm:ActionParameterViewModel">
+                              <Grid ColumnDefinitions="180,*" Margin="0,3">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding DisplayName}"
+                                           VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1"
+                                         Watermark="{Binding Placeholder}"
+                                         Text="{Binding Value}" />
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Запуск -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Запуск" Classes="Подзаголовок" />
+
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <ComboBox MinWidth="260"
+                          ItemsSource="{Binding Characters}"
+                          SelectedItem="{Binding SelectedCharacter}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="characters:CharacterListItem">
+                      <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="Выполнить" Classes="Основная" Command="{Binding RunCommand}" />
+              </StackPanel>
+
+              <TextBlock Text="{Binding Summary}"
+                         Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Panel>
+  </Grid>
+</UserControl>

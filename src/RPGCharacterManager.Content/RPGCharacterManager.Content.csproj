@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Игровой контент: описания видов объектов, их полей и хранение.
+
+    Проект не содержит контента конкретной игровой системы — только описания того,
+    из каких полей состоят объекты. Сами объекты создаёт пользователь.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Content</RootNamespace>
+    <Description>Управление игровым контентом и пользовательскими свойствами.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

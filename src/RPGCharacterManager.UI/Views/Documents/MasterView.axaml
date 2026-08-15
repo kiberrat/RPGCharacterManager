@@ -1,0 +1,312 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:master="clr-namespace:RPGCharacterManager.Core.Abstractions.Master;assembly=RPGCharacterManager.Core"
+             xmlns:history="clr-namespace:RPGCharacterManager.Core.Abstractions.History;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.MasterView"
+             x:DataType="vm:MasterViewModel">
+
+  <UserControl.Styles>
+    <!-- Значок эффекта: окраска повторяет вкладку «Эффекты» на листе персонажа. -->
+    <Style Selector="Border.Значок">
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="7,2" />
+      <Setter Property="Background" Value="{DynamicResource AppSurfaceHoverBrush}" />
+    </Style>
+
+    <Style Selector="Border.Значок.Положительный">
+      <Setter Property="Background" Value="{DynamicResource AppSuccessBrush}" />
+    </Style>
+
+    <Style Selector="Border.Значок.Отрицательный">
+      <Setter Property="Background" Value="{DynamicResource AppDangerBrush}" />
+    </Style>
+
+    <Style Selector="Border.Значок.Нейтральный">
+      <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel Margin="{DynamicResource AppDocumentPadding}">
+
+    <!-- ===================== Панель управления сессией ===================== -->
+    <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,14">
+      <TextBlock Text="Мастер" Classes="Заголовок" />
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <ComboBox ItemsSource="{Binding Campaigns}"
+                  SelectedItem="{Binding SelectedCampaign}"
+                  MinWidth="220">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="master:MasterOption">
+              <TextBlock Text="{Binding Name}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <Button Content="Обновить" Command="{Binding RefreshCommand}" />
+        <Button Content="Отметить всех" Command="{Binding SelectAllCommand}" />
+        <Button Content="Снять отметки" Command="{Binding ClearSelectionCommand}" />
+
+        <TextBlock Text="{Binding Summary}"
+                   Classes="Вторичный"
+                   VerticalAlignment="Center"
+                   Margin="6,0,0,0" />
+      </StackPanel>
+    </StackPanel>
+
+    <Grid ColumnDefinitions="*,380">
+
+      <!-- ===================== Персонажи ===================== -->
+      <Border Grid.Column="0" Classes="Карточка" Padding="0" Margin="0,0,16,0">
+        <Panel>
+          <TextBlock IsVisible="{Binding IsEmpty}"
+                     Classes="Вторичный"
+                     Margin="16"
+                     TextWrapping="Wrap"
+                     Text="Персонажей нет. Создайте персонажа в разделе «Персонажи» либо выберите другую кампанию." />
+
+          <ScrollViewer IsVisible="{Binding !IsEmpty}">
+            <ItemsControl ItemsSource="{Binding Rows}" Margin="10">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:MasterRowViewModel">
+                  <Border Classes="Карточка" Margin="0,0,0,8" Padding="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+
+                      <CheckBox Grid.Column="0"
+                                IsChecked="{Binding IsSelected}"
+                                VerticalAlignment="Top"
+                                Margin="0,0,10,0" />
+
+                      <StackPanel Grid.Column="1" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <TextBlock Text="{Binding Character.Name}" FontWeight="SemiBold" />
+                          <Border Background="{DynamicResource AppAccentBrush}"
+                                  CornerRadius="4"
+                                  Padding="6,1"
+                                  IsVisible="{Binding Character.IsCurrentTurn}">
+                            <TextBlock Text="ходит" FontSize="11" />
+                          </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding Character.Summary}" Classes="Вторичный" />
+
+                        <TextBlock Classes="Вторичный"
+                                   IsVisible="{Binding Character.Player, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <Run Text="игрок:" />
+                          <Run Text="{Binding Character.Player}" />
+                        </TextBlock>
+
+                        <!-- Ресурсы: полосы того, что задала игровая система. -->
+                        <ItemsControl ItemsSource="{Binding Character.Resources}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="master:MasterResource">
+                              <Grid ColumnDefinitions="120,140,Auto" Margin="0,2">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding Name}"
+                                           Classes="Вторичный"
+                                           TextTrimming="CharacterEllipsis" />
+                                <ProgressBar Grid.Column="1"
+                                             Minimum="0"
+                                             Maximum="1"
+                                             Value="{Binding Share, Mode=OneWay}"
+                                             Height="8"
+                                             VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Margin="8,0,0,0" Classes="Вторичный">
+                                  <Run Text="{Binding Current, Mode=OneWay}" />
+                                  <Run Text="/" />
+                                  <Run Text="{Binding Maximum, Mode=OneWay}" />
+                                </TextBlock>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Эффекты, действующие на персонажа. -->
+                        <ItemsControl ItemsSource="{Binding Character.Effects}"
+                                      IsVisible="{Binding Character.HasEffects}">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <WrapPanel />
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="master:MasterEffect">
+                              <Border Classes="Значок"
+                                      Classes.Положительный="{Binding IsPositive}"
+                                      Classes.Отрицательный="{Binding IsNegative}"
+                                      Classes.Нейтральный="{Binding IsNeutral}">
+                                <TextBlock Text="{Binding Caption}" FontSize="11" />
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+
+                      <!-- Инициатива: показывается, только если она есть в игре. -->
+                      <StackPanel Grid.Column="2"
+                                  Spacing="4"
+                                  VerticalAlignment="Top"
+                                  IsVisible="{Binding $parent[UserControl].((vm:MasterViewModel)DataContext).IsInitiativeEnabled}">
+                        <TextBlock Text="Инициатива" Classes="Вторичный" FontSize="11" />
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                          <TextBox Text="{Binding InitiativeText}" Width="62" />
+                          <Button Content="Задать"
+                                  Command="{Binding $parent[UserControl].((vm:MasterViewModel)DataContext).SaveInitiativeCommand}"
+                                  CommandParameter="{Binding}" />
+                        </StackPanel>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Panel>
+      </Border>
+
+      <!-- ===================== Панели мастера ===================== -->
+      <TabControl Grid.Column="1">
+
+        <!-- Ресурсы: урон, лечение, расход. -->
+        <TabItem Header="Ресурсы">
+          <StackPanel Spacing="10" Margin="4,10,4,4">
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       Text="Изменение применяется ко всем отмеченным персонажам. Хиты — такой же ресурс, как мана или заряды, поэтому выберите нужный." />
+
+            <ComboBox ItemsSource="{Binding Resources}"
+                      SelectedItem="{Binding SelectedResource}"
+                      HorizontalAlignment="Stretch">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="master:MasterOption">
+                  <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <TextBox Text="{Binding Amount}" Watermark="Величина, например 7" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Отнять" Classes="Основная" Command="{Binding SubtractCommand}" />
+              <Button Content="Прибавить" Command="{Binding AddCommand}" />
+            </StackPanel>
+
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       Text="Значение не опускается ниже нуля и не поднимается выше максимума: предел задан игровой системой." />
+          </StackPanel>
+        </TabItem>
+
+        <!-- Эффекты: массовое наложение и снятие. -->
+        <TabItem Header="Эффекты">
+          <StackPanel Spacing="10" Margin="4,10,4,4">
+            <TextBlock Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       Text="Эффект накладывается по правилам повторного наложения, заданным в самом эффекте." />
+
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBox Grid.Column="0" Text="{Binding EffectSearch}" Watermark="Поиск эффекта" />
+              <Button Grid.Column="1"
+                      Content="Найти"
+                      Margin="6,0,0,0"
+                      Command="{Binding SearchEffectsCommand}" />
+            </Grid>
+
+            <ComboBox ItemsSource="{Binding Effects}"
+                      SelectedItem="{Binding SelectedEffect}"
+                      HorizontalAlignment="Stretch">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="master:MasterOption">
+                  <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Наложить" Classes="Основная" Command="{Binding ApplyEffectCommand}" />
+              <Button Content="Снять" Command="{Binding RemoveEffectCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </TabItem>
+
+        <!-- Инициатива: очередь хода, если она есть в игровой системе. -->
+        <TabItem Header="Инициатива">
+          <StackPanel Spacing="10" Margin="4,10,4,4">
+
+            <TextBlock IsVisible="{Binding !IsInitiativeEnabled}"
+                       Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       Text="{Binding InitiativeHint}" />
+
+            <StackPanel Spacing="10" IsVisible="{Binding IsInitiativeEnabled}">
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap">
+                <Run Text="Формула игровой системы:" />
+                <Run Text="{Binding InitiativeFormula}" />
+              </TextBlock>
+
+              <TextBlock IsVisible="{Binding IsCombatStarted}">
+                <Run Text="Раунд" />
+                <Run Text="{Binding Round}" />
+              </TextBlock>
+
+              <Button Content="Бросить инициативу отмеченным"
+                      Classes="Основная"
+                      HorizontalAlignment="Stretch"
+                      Command="{Binding RollInitiativeCommand}" />
+
+              <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsCombatStarted}">
+                <Button Content="Следующий ход" Command="{Binding NextTurnCommand}" />
+                <Button Content="Завершить бой" Command="{Binding EndCombatCommand}" />
+              </StackPanel>
+
+              <TextBlock Classes="Вторичный"
+                         TextWrapping="Wrap"
+                         Text="Больший результат ходит раньше. Значение можно исправить вручную в строке персонажа." />
+            </StackPanel>
+          </StackPanel>
+        </TabItem>
+
+        <!-- Общий журнал показанных персонажей. -->
+        <TabItem Header="Журнал">
+          <Panel Margin="4,10,4,4">
+            <TextBlock IsVisible="{Binding IsJournalEmpty}"
+                       Classes="Вторичный"
+                       TextWrapping="Wrap"
+                       Text="Событий пока нет. Здесь появится всё, что происходит с персонажами за столом." />
+
+            <ScrollViewer IsVisible="{Binding !IsJournalEmpty}">
+              <ItemsControl ItemsSource="{Binding Journal}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="history:HistoryRecord">
+                    <StackPanel Spacing="1" Margin="0,0,0,10">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" />
+                      <TextBlock Text="{Binding Description}"
+                                 Classes="Вторичный"
+                                 FontSize="12"
+                                 TextWrapping="Wrap"
+                                 IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      <TextBlock Classes="Вторичный" FontSize="11" IsVisible="{Binding HasChange}">
+                        <Run Text="{Binding OldValue}" />
+                        <Run Text="→" />
+                        <Run Text="{Binding NewValue}" />
+                      </TextBlock>
+                      <TextBlock Classes="Вторичный" FontSize="11">
+                        <Run Text="{Binding CharacterName}" />
+                        <Run Text="·" />
+                        <Run Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}" />
+                      </TextBlock>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Panel>
+        </TabItem>
+      </TabControl>
+    </Grid>
+  </DockPanel>
+</UserControl>

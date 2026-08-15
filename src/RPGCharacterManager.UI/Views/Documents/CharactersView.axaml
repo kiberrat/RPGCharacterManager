@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Characters;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.CharactersView"
+             x:DataType="vm:CharactersViewModel">
+
+  <Grid ColumnDefinitions="420,8,*" Margin="24,20,24,20">
+
+    <!-- ===================== Список персонажей ===================== -->
+    <DockPanel Grid.Column="0">
+
+      <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+        <TextBox Watermark="Поиск по имени" Text="{Binding SearchText}" />
+
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button Content="Создать персонажа"
+                  Command="{Binding CreateCommand}"
+                  Classes="Основная" />
+          <Button Content="Открыть лист"
+                  Command="{Binding OpenSheetCommand}"
+                  IsEnabled="{Binding HasSelection}" />
+          <Button Content="Повысить уровень"
+                  Command="{Binding LevelUpCommand}"
+                  IsEnabled="{Binding HasSelection}" />
+          <Button Content="Пересчитать"
+                  Command="{Binding RecalculateCommand}"
+                  IsEnabled="{Binding HasSelection}" />
+          <Button Content="Удалить"
+                  Command="{Binding DeleteCommand}"
+                  IsEnabled="{Binding HasSelection}" />
+        </StackPanel>
+      </StackPanel>
+
+      <TextBlock DockPanel.Dock="Bottom"
+                 Text="{Binding ListSummary}"
+                 Classes="Вторичный"
+                 Margin="0,8,0,0" />
+
+      <Border Classes="Карточка" Padding="0">
+        <Panel>
+          <StackPanel IsVisible="{Binding IsEmpty}"
+                      VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" Margin="16">
+            <TextBlock Text="Персонажей пока нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+            <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                       Text="Нажмите «Создать персонажа»: мастер проведёт по шагам и вычислит все параметры." />
+          </StackPanel>
+
+          <!-- Список виртуализирован: он рассчитан на десятки тысяч персонажей. -->
+          <ListBox ItemsSource="{Binding Characters}"
+                   SelectedItem="{Binding SelectedCharacter}"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   IsVisible="{Binding !IsEmpty}">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="core:CharacterListItem">
+                <StackPanel Spacing="2" Margin="2">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Classes="Вторичный" Text="{Binding Level, StringFormat='уровень {0}'}" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding GameSystemName}" Classes="Вторичный" />
+                    <TextBlock Text="{Binding RaceName}" Classes="Вторичный" />
+                    <TextBlock Text="{Binding ClassName}" Classes="Вторичный" />
+                  </StackPanel>
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Panel>
+      </Border>
+    </DockPanel>
+
+    <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+    <!-- ===================== Сведения о персонаже ===================== -->
+    <Panel Grid.Column="2">
+
+      <StackPanel IsVisible="{Binding !HasSelection}"
+                  VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" MaxWidth="560">
+        <TextBlock Text="Персонажи" Classes="Заголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Выберите персонажа слева, чтобы повысить его уровень или пересчитать параметры. Пересчёт применяет текущие формулы и правила: он нужен после изменения контента игровой системы." />
+      </StackPanel>
+
+      <DockPanel IsVisible="{Binding HasSelection}" Margin="12,0,0,0">
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,10">
+          <TextBlock Text="{Binding SelectedCharacter.Name}" Classes="Заголовок" TextWrapping="Wrap" />
+          <TextBlock Classes="Вторичный"
+                     Text="{Binding SelectedCharacter.Level, StringFormat='Уровень {0}'}" />
+          <TextBlock Classes="Вторичный" Text="{Binding SelectedCharacter.GameSystemName}" />
+        </StackPanel>
+
+        <Border Classes="Карточка">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Последняя операция" Classes="Подзаголовок" />
+
+            <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                       IsVisible="{Binding !HasReport}"
+                       Text="Здесь появится отчёт о повышении уровня или пересчёте: какие значения изменились и какие правила применились." />
+
+            <SelectableTextBlock Text="{Binding LastReport}"
+                                 IsVisible="{Binding HasReport}"
+                                 TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </DockPanel>
+    </Panel>
+
+  </Grid>
+
+</UserControl>

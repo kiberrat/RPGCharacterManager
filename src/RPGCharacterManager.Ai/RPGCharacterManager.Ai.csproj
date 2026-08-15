@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Помощник: чат, разбор книг, создание и правка игровых объектов, проверка базы.
+
+    Проект знает только контракты ядра. Ни одного обращения к базе данных здесь нет:
+    всё, что помощник читает и предлагает изменить, проходит через службу контента,
+    поэтому помощник работает с любым видом объектов любой игровой системы и не
+    содержит знаний о конкретных играх.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Ai</RootNamespace>
+    <Description>Помощник: чат, анализ книг, генерация и проверка игрового контента.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Перевод запросов в формат службы и разбиение книги на части — внутренние
+      подробности подсистемы, и публичными их делать незачем. Но именно в них
+      проще всего ошибиться, поэтому тесты получают к ним доступ напрямую.
+    -->
+    <InternalsVisibleTo Include="RPGCharacterManager.Tests" />
+  </ItemGroup>
+
+</Project>

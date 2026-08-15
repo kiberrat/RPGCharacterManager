@@ -1,0 +1,143 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Characters;assembly=RPGCharacterManager.Core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="RPGCharacterManager.UI.Views.Characters.SummaryStepView"
+             x:DataType="vm:SummaryStepViewModel">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="12">
+
+      <!-- ===================== Персонаж ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding CharacterSummary}" Classes="Заголовок" TextWrapping="Wrap" />
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     Text="Все значения вычислены формулами игровой системы и правилами. Вернуться на любой шаг можно в любой момент — сделанный выбор сохраняется." />
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Замечания ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Проверка" Classes="Подзаголовок" />
+
+          <TextBlock Classes="Вторичный"
+                     IsVisible="{Binding HasNoIssues}"
+                     Text="Замечаний нет: персонажа можно создать." />
+
+          <ItemsControl ItemsSource="{Binding Issues}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:CharacterIssueViewModel">
+                <Grid ColumnDefinitions="*,Auto" Margin="0,3">
+                  <StackPanel Grid.Column="0" Spacing="1">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="{Binding SeverityName}"
+                                 FontSize="{DynamicResource AppFontSizeSmall}" />
+                      <TextBlock Text="{Binding StepTitle}" Classes="Вторичный"
+                                 FontSize="{DynamicResource AppFontSizeSmall}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                  </StackPanel>
+
+                  <Button Grid.Column="1"
+                          Content="Перейти"
+                          Margin="10,0,0,0"
+                          VerticalAlignment="Center"
+                          Command="{Binding $parent[ItemsControl].((vm:SummaryStepViewModel)DataContext).OpenStepCommand}"
+                          CommandParameter="{Binding StepId}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Характеристики ===================== -->
+      <Border Classes="Карточка">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Характеристики" Classes="Подзаголовок" />
+
+          <ItemsControl ItemsSource="{Binding Attributes}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="core:CalculatedAttributeValue">
+                <Grid ColumnDefinitions="240,100,*" Margin="0,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Name}" TextWrapping="Wrap" />
+                  <TextBlock Grid.Column="1" Text="{Binding Value, StringFormat={}{0:0.####}}" />
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="модификатор" Classes="Вторичный" />
+                    <TextBlock Text="{Binding Modifier, StringFormat={}{0:0.####}}" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Навыки ===================== -->
+      <Border Classes="Карточка" IsVisible="{Binding HasSkills}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Навыки" Classes="Подзаголовок" />
+
+          <ItemsControl ItemsSource="{Binding Skills}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="core:CalculatedSkill">
+                <Grid ColumnDefinitions="240,100,*" Margin="0,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Name}" TextWrapping="Wrap" />
+                  <TextBlock Grid.Column="1" Text="{Binding Value, StringFormat={}{0:0.####}}" />
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="владение" Classes="Вторичный" />
+                    <TextBlock Text="{Binding ProficiencyLevel}" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Ресурсы ===================== -->
+      <Border Classes="Карточка" IsVisible="{Binding HasResources}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Ресурсы" Classes="Подзаголовок" />
+
+          <ItemsControl ItemsSource="{Binding Resources}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="core:CalculatedResource">
+                <Grid ColumnDefinitions="240,*" Margin="0,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Name}" TextWrapping="Wrap" />
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="{Binding Current, StringFormat={}{0:0.####}}" />
+                    <TextBlock Text="из" Classes="Вторичный" />
+                    <TextBlock Text="{Binding Maximum, StringFormat={}{0:0.####}}" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ===================== Правила ===================== -->
+      <Border Classes="Карточка" IsVisible="{Binding HasAppliedRules}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Применённые правила" Classes="Подзаголовок" />
+
+          <ItemsControl ItemsSource="{Binding AppliedRules}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+
+</UserControl>

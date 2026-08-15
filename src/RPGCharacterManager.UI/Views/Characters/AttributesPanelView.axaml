@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
+             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RPGCharacterManager.UI.Views.Characters.AttributesPanelView"
+             x:DataType="charactersVm:SheetPanelViewModel">
+
+  <!-- характеристики и производные значения. -->
+  <Panel DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="12" Margin="0,10,0,0">
+
+      <Border Classes="Карточка">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Характеристики" Classes="Подзаголовок" />
+
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     IsVisible="{Binding HasNoAttributes}"
+                     Text="Характеристики не созданы. Опишите их в разделе «Контент» — состав определяете вы." />
+
+          <ItemsControl ItemsSource="{Binding AttributeGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:SheetAttributeGroupViewModel">
+                <StackPanel Spacing="4" Margin="0,0,0,10">
+                  <TextBlock Text="{Binding Title}" Classes="Вторичный" />
+
+                  <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="charactersVm:SheetAttributeRowViewModel">
+                        <Grid ColumnDefinitions="240,120,*" Margin="0,3">
+                          <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,10,0">
+                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Hint}" Classes="Вторичный" TextWrapping="Wrap" />
+                          </StackPanel>
+
+                          <TextBox Grid.Column="1"
+                                   Text="{Binding BaseText}"
+                                   IsEnabled="{Binding IsEditable}" />
+
+                          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
+                                      Margin="12,0,0,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                              <TextBlock Text="итог" Classes="Вторичный" />
+                              <TextBlock Text="{Binding Value}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                              <TextBlock Text="модификатор" Classes="Вторичный" />
+                              <TextBlock Text="{Binding Modifier}" />
+                            </StackPanel>
+                            <TextBlock Text="вычисляется формулой"
+                                       Classes="Вторичный"
+                                       IsVisible="{Binding IsDerived}" />
+                          </StackPanel>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="Карточка">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Ресурсы" Classes="Подзаголовок" />
+
+          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                     IsVisible="{Binding HasNoResources}"
+                     Text="Ресурсы не созданы. Здоровье, мана и любые другие счётчики описываются в разделе «Контент»." />
+
+          <ItemsControl ItemsSource="{Binding Resources}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:SheetResourceRowViewModel">
+                <Grid ColumnDefinitions="240,120,*" Margin="0,3">
+                  <TextBlock Grid.Column="0" Text="{Binding Name}" TextWrapping="Wrap"
+                             VerticalAlignment="Center" Margin="0,0,10,0" />
+                  <TextBox Grid.Column="1" Text="{Binding CurrentText}" />
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                              Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="из" Classes="Вторичный" />
+                    <TextBlock Text="{Binding Maximum}" />
+                    <TextBlock Text="{Binding RestoreRule}"
+                               Classes="Вторичный"
+                               IsVisible="{Binding HasRestoreRule}" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+  </Panel>
+</UserControl>

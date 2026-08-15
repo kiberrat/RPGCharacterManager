@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="720"
+             x:Class="RPGCharacterManager.UI.Views.Documents.FeedbackView"
+             x:DataType="vm:FeedbackViewModel">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="20" MaxWidth="820" HorizontalAlignment="Left"
+                Margin="{DynamicResource AppDocumentPadding}">
+      <StackPanel Spacing="4">
+        <TextBlock Text="Обратная связь" Classes="Заголовок" />
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                   Text="Расскажите об ошибке, предложите функцию или задайте вопрос разработчику." />
+      </StackPanel>
+
+      <Border Classes="Карточка">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Новое сообщение" Classes="Подзаголовок" />
+
+          <Grid ColumnDefinitions="180,*">
+            <TextBlock Grid.Column="0" Text="Категория" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" MinWidth="280" HorizontalAlignment="Left"
+                      ItemsSource="{Binding KindOptions}"
+                      SelectedValue="{Binding SelectedKind}"
+                      SelectedValueBinding="{Binding Value}"
+                      DisplayMemberBinding="{Binding Title}" />
+          </Grid>
+
+          <StackPanel Spacing="6">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Сообщение" />
+              <TextBlock Grid.Column="1" Text="{Binding CharacterCount}" Classes="Вторичный" />
+            </Grid>
+            <TextBox Text="{Binding Message}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="220"
+                     MaxLength="5000"
+                     Watermark="Опишите идею или проблему. Для ошибки полезно указать, что вы делали перед её появлением." />
+          </StackPanel>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="Контакт для ответа — необязательно" />
+            <TextBox Text="{Binding Contact}" MaxLength="200"
+                     Watermark="Например, email или Telegram" />
+          </StackPanel>
+
+          <CheckBox IsChecked="{Binding IncludeTechnicalInformation}"
+                    Content="Приложить версию приложения, Windows и .NET (без имени компьютера и личных файлов)" />
+
+          <Border Classes="Подсказка">
+            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Classes="Вторичный" />
+          </Border>
+
+          <Button Content="Отправить разработчику"
+                  HorizontalAlignment="Left"
+                  Command="{Binding SendCommand}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

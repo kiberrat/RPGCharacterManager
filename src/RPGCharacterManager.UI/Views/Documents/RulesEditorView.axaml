@@ -1,0 +1,325 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
+             xmlns:rulesVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Rules"
+             xmlns:core="clr-namespace:RPGCharacterManager.Core.Abstractions.Rules;assembly=RPGCharacterManager.Core"
+             xmlns:views="clr-namespace:RPGCharacterManager.UI.Views.Rules"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="RPGCharacterManager.UI.Views.Documents.RulesEditorView"
+             x:DataType="vm:RulesEditorViewModel">
+
+  <!--
+    Расположение элементов задано документом 019_Редактор_правил.md:
+    слева категории и список правил, в центре конструктор, справа свойства,
+    снизу проверка и тестирование.
+  -->
+  <Grid ColumnDefinitions="280,4,*,4,320">
+
+    <!-- ===================== Левая часть: категории и правила ===================== -->
+    <DockPanel Grid.Column="0" Margin="12,12,0,12">
+      <TextBlock DockPanel.Dock="Top" Text="Категории" Classes="Вторичный" Margin="0,0,0,4" />
+
+      <ComboBox DockPanel.Dock="Top"
+                HorizontalAlignment="Stretch"
+                ItemsSource="{Binding Categories}"
+                SelectedItem="{Binding SelectedCategory}" />
+
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,10,0,6">
+        <Button Content="Создать" Command="{Binding CreateRuleCommand}"
+                Classes="Основная" />
+        <Button Content="Копия" Command="{Binding DuplicateRuleCommand}"
+                IsEnabled="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        <Button Content="Удалить" Command="{Binding DeleteCommand}"
+                IsEnabled="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+
+      <Border Classes="Карточка" Padding="0">
+        <Panel>
+          <StackPanel IsVisible="{Binding !VisibleRules.Count}"
+                      VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" Margin="12">
+            <TextBlock Text="Правил пока нет" Classes="Подзаголовок" HorizontalAlignment="Center" />
+            <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                       Text="Нажмите «Создать», чтобы описать собственную игровую механику." />
+          </StackPanel>
+
+          <ListBox ItemsSource="{Binding VisibleRules}"
+                   SelectedItem="{Binding SelectedRule}"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   IsVisible="{Binding !!VisibleRules.Count}">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:RuleListItem">
+                <StackPanel Spacing="2" Margin="2">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="(отключено)" Classes="Вторичный" IsVisible="{Binding !Enabled}" />
+                  </StackPanel>
+                  <TextBlock Classes="Вторичный"
+                             Text="{Binding TriggerName, StringFormat='Событие: {0}'}"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Panel>
+      </Border>
+    </DockPanel>
+
+    <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+    <!-- ===================== Центр: конструктор ===================== -->
+    <Panel Grid.Column="2" Margin="12">
+
+      <StackPanel IsVisible="{Binding !IsRuleOpen}"
+                  VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" MaxWidth="520">
+        <TextBlock Text="Конструктор правил" Classes="Заголовок" HorizontalAlignment="Center" />
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Правило состоит из события, условий и действий. Когда происходит событие, приложение проверяет условия и выполняет действия над персонажем." />
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Выберите правило слева или создайте новое." />
+      </StackPanel>
+
+      <ScrollViewer IsVisible="{Binding IsRuleOpen}" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="14">
+
+          <!-- Событие -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Событие" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                         Text="Момент игры, в который правило проверяется." />
+              <ComboBox HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding AvailableTriggers}"
+                        SelectedItem="{Binding RuleTrigger}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="core:RuleTrigger">
+                    <StackPanel Spacing="1">
+                      <TextBlock Text="{Binding DisplayName}" />
+                      <TextBlock Classes="Вторичный" Text="{Binding Description}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </StackPanel>
+          </Border>
+
+          <!-- Условия -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Условия" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                         Text="Проверки, которые должны выполниться. В левой и правой части допустимы формулы: Сила + Уровень, 2d6, Максимум(Сила; Ловкость)." />
+              <ContentControl Content="{Binding ConditionRoot}">
+                <ContentControl.ContentTemplate>
+                  <DataTemplate x:DataType="rulesVm:ConditionNodeViewModel">
+                    <views:ConditionNodeView />
+                  </DataTemplate>
+                </ContentControl.ContentTemplate>
+              </ContentControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Действия -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Действия" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                         Text="Выполняются по порядку, если условия истинны." />
+
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <ComboBox MinWidth="260"
+                          ItemsSource="{Binding AvailableActionKinds}"
+                          SelectedItem="{Binding SelectedActionKind}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="core:IRuleActionHandler">
+                      <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="Добавить действие" Command="{Binding AddActionCommand}" />
+              </StackPanel>
+
+              <TextBlock Classes="Вторичный"
+                         Text="Действий пока нет."
+                         IsVisible="{Binding !Actions.Count}" />
+
+              <ItemsControl ItemsSource="{Binding Actions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="rulesVm:ActionEditorViewModel">
+                    <Border BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource AppCornerRadius}"
+                            Background="{DynamicResource AppSurfaceBrush}"
+                            Padding="10"
+                            Margin="0,4">
+                      <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <StackPanel Grid.Column="0" Spacing="1">
+                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Description}" Classes="Вторичный" TextWrapping="Wrap" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Content="↑" ToolTip.Tip="Выполнять раньше" Command="{Binding MoveUpCommand}" />
+                            <Button Content="↓" ToolTip.Tip="Выполнять позже" Command="{Binding MoveDownCommand}" />
+                            <Button Content="✕" ToolTip.Tip="Удалить действие" Command="{Binding RemoveCommand}" />
+                          </StackPanel>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding Parameters}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="rulesVm:ActionParameterViewModel">
+                              <Grid ColumnDefinitions="180,*" Margin="0,3">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding DisplayName}"
+                                           VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1"
+                                         Watermark="{Binding Placeholder}"
+                                         Text="{Binding Value}" />
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Проверка и тестирование -->
+          <Border Classes="Карточка">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Проверка и тестирование" Classes="Подзаголовок" />
+
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="Проверить правила" Command="{Binding ValidateCommand}" />
+                <Button Content="Применить к пробному персонажу" Command="{Binding RunTestCommand}" />
+              </StackPanel>
+
+              <Grid ColumnDefinitions="*,*" >
+                <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,6,0">
+                  <TextBlock Text="Параметры пробного персонажа" Classes="Вторичный" />
+                  <TextBox AcceptsReturn="True"
+                           MinHeight="90"
+                           Watermark="Сила = 18&#x0a;Уровень = 5&#x0a;Здоровье = 40"
+                           Text="{Binding TestVariables}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4" Margin="6,0,0,0">
+                  <TextBlock Text="Признаки через запятую" Classes="Вторичный" />
+                  <TextBox AcceptsReturn="True"
+                           MinHeight="90"
+                           Watermark="Ярость, Отравление"
+                           Text="{Binding TestTags}" />
+                </StackPanel>
+              </Grid>
+
+              <Border IsVisible="{Binding HasTestResult}"
+                      Background="{DynamicResource AppSurfaceBrush}"
+                      BorderBrush="{DynamicResource AppBorderBrush}"
+                      BorderThickness="1"
+                      CornerRadius="{DynamicResource AppCornerRadius}"
+                      Padding="10">
+                <SelectableTextBlock Text="{Binding TestResult}"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="{DynamicResource AppFontSizeSmall}"
+                                     TextWrapping="Wrap" />
+              </Border>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Panel>
+
+    <GridSplitter Grid.Column="3" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+    <!-- ===================== Правая часть: свойства правила ===================== -->
+    <ScrollViewer Grid.Column="4" Margin="0,12,12,12" VerticalScrollBarVisibility="Auto"
+                  IsVisible="{Binding IsRuleOpen}">
+      <StackPanel Spacing="12">
+
+        <Border Classes="Карточка">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Свойства правила" Classes="Подзаголовок" />
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Название" Classes="Вторичный" />
+              <TextBox Text="{Binding RuleName}" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Описание" Classes="Вторичный" />
+              <TextBox AcceptsReturn="True" MinHeight="70" Text="{Binding RuleDescription}" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Категория" Classes="Вторичный" />
+              <ComboBox HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding EditableCategories}"
+                        SelectedItem="{Binding RuleCategory}" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Приоритет" Classes="Вторичный" />
+              <NumericUpDown Minimum="0" Maximum="10000" Increment="10" FormatString="0"
+                             Value="{Binding RulePriority}" />
+              <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                         Text="Правило с большим приоритетом применяется последним и переопределяет результат остальных." />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Автор" Classes="Вторичный" />
+              <TextBox Text="{Binding RuleAuthor}" />
+            </StackPanel>
+
+            <ToggleSwitch IsChecked="{Binding RuleEnabled}"
+                          OnContent="Правило активно"
+                          OffContent="Правило отключено" />
+
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Button Content="Сохранить"
+                      Command="{Binding SaveCommand}"
+                      Classes="Основная" />
+              <TextBlock Classes="Вторичный"
+                         VerticalAlignment="Center"
+                         Text="Есть изменения"
+                         IsVisible="{Binding HasUnsavedChanges}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="Карточка">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Результат проверки" Classes="Подзаголовок" />
+
+            <TextBlock Classes="Вторичный"
+                       Text="Замечаний нет — правила согласованы."
+                       IsVisible="{Binding HasNoIssues}" />
+
+            <ItemsControl ItemsSource="{Binding Issues}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="core:RuleIssue">
+                  <StackPanel Spacing="1" Margin="0,4">
+                    <TextBlock Text="{Binding RuleName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Classes="Вторичный" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+
+</UserControl>

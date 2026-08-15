@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Игровые правила: модель выполнения, обработчики действий, события,
+    проверка конфликтов и сохранение правил.
+
+    Проект не содержит правил конкретной игры: любая механика описывается данными.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.GameRules</RootNamespace>
+    <Description>Движок и хранение пользовательских игровых правил.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

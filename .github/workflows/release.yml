@@ -1,0 +1,55 @@
+name: Publish Windows release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without v prefix, for example 1.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build and test
+        shell: pwsh
+        run: |
+          dotnet build RPGCharacterManager.sln -c Release
+          dotnet test RPGCharacterManager.sln -c Release --no-build
+
+      - name: Package installer and update feed
+        shell: pwsh
+        env:
+          FEEDBACK_ENDPOINT: ${{ secrets.FEEDBACK_ENDPOINT }}
+        run: |
+          $notes = "deploy/release-notes/${{ inputs.version }}.md"
+          if (-not (Test-Path -LiteralPath $notes)) {
+            throw "Add release notes first: $notes"
+          }
+          ./build-release.ps1 `
+            -Version "${{ inputs.version }}" `
+            -UpdateSource "https://github.com/${{ github.repository }}" `
+            -FeedbackEndpoint $env:FEEDBACK_ENDPOINT `
+            -ReleaseNotes $notes
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ inputs.version }}" `
+            (Get-ChildItem releases-local -File | ForEach-Object FullName) `
+            --title "RPG Character Manager ${{ inputs.version }}" `
+            --notes-file "deploy/release-notes/${{ inputs.version }}.md"

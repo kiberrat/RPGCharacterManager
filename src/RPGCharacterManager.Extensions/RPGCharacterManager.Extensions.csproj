@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Расширения приложения.
+
+    Расширение — это набор объектов самого приложения, а не программа. Подсистема
+    не загружает и не выполняет чужой код: она читает файл, проверяет его
+    и складывает содержимое в те же таблицы, в которые пишет пользователь.
+    Поэтому расширение не может сделать ничего, чего не может сделать человек
+    за тем же приложением.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>RPGCharacterManager.Extensions</RootNamespace>
+    <Description>Расширения: установка, обновление, удаление и выгрузка наборов игровых объектов.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RPGCharacterManager.Core\RPGCharacterManager.Core.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Database\RPGCharacterManager.Database.csproj" />
+    <ProjectReference Include="..\RPGCharacterManager.Shared\RPGCharacterManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>
