@@ -564,20 +564,26 @@ public sealed class CharacterSheetService : ICharacterSheetService
             .Select(resource =>
             {
                 byId.TryGetValue(resource.Id, out var definition);
+                stored.TryGetValue(resource.Id, out var value);
+
+                var calculatedMaximum = Math.Max(0, resource.Maximum);
+                var effectiveMaximum = Math.Max(0, value?.MaximumOverride ?? calculatedMaximum);
 
                 // Текущее значение принадлежит персонажу и не пересчитывается:
                 // пересчёт задаёт лишь максимум, до которого оно ограничивается.
-                var current = stored.TryGetValue(resource.Id, out var value)
-                    ? value.Current
-                    : resource.Current;
+                var current = value?.Current ?? resource.Current;
 
                 return new SheetResource(
                     resource.Id,
                     resource.Name,
                     Category(definition?.Category),
-                    Math.Min(current, resource.Maximum),
-                    resource.Maximum,
-                    definition?.RestoreRule);
+                    Math.Min(current, effectiveMaximum),
+                    effectiveMaximum,
+                    definition?.RestoreRule)
+                {
+                    CalculatedMaximum = calculatedMaximum,
+                    IsMaximumOverridden = value?.MaximumOverride is not null,
+                };
             })
             .ToList();
     }

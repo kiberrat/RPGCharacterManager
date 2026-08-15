@@ -1,4 +1,5 @@
 using RPGCharacterManager.Core.Abstractions.Characters;
+using RPGCharacterManager.Core.Models.Entities;
 using RPGCharacterManager.Shared.Results;
 
 namespace RPGCharacterManager.Core.Abstractions.Items;
@@ -66,6 +67,39 @@ public sealed record EquipmentSlotState(
     public bool IsEmpty => Items.Count == 0;
 }
 
+/// <summary>Один настраиваемый бонус авторской экипировки.</summary>
+/// <param name="Target">Вид цели бонуса.</param>
+/// <param name="AttributeId">Характеристика, если выбрана характеристика.</param>
+/// <param name="ResourceId">Ресурс, если выбран максимум ресурса.</param>
+/// <param name="Name">Имя переменной, тега или подпись бонуса.</param>
+/// <param name="Formula">Формула величины.</param>
+/// <param name="Condition">Необязательное условие.</param>
+public sealed record LocalEquipmentBonusDraft(
+    BonusTargetKind Target,
+    Guid? AttributeId,
+    Guid? ResourceId,
+    string? Name,
+    string? Formula,
+    string? Condition);
+
+/// <summary>Параметры авторской экипировки одного персонажа.</summary>
+/// <param name="Name">Название предмета.</param>
+/// <param name="Description">Описание предмета.</param>
+/// <param name="ItemType">Тип предмета.</param>
+/// <param name="Rarity">Редкость.</param>
+/// <param name="Weight">Вес.</param>
+/// <param name="Price">Стоимость.</param>
+/// <param name="Currency">Валюта стоимости.</param>
+/// <param name="Bonuses">Бонусы при надевании.</param>
+public sealed record LocalEquipmentDraft(
+    string Name,
+    string? Description,
+    string? ItemType,
+    string? Rarity,
+    double Weight,
+    double Price,
+    string? Currency,
+    IReadOnlyList<LocalEquipmentBonusDraft> Bonuses);
 /// <summary>
 /// Экипировка персонажа: слоты, надевание предметов и их бонусы.
 ///
@@ -116,6 +150,17 @@ public interface IEquipmentService
         Guid itemId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Создаёт авторскую экипировку только для персонажа и сразу надевает её.</summary>
+    /// <param name="characterId">Идентификатор персонажа.</param>
+    /// <param name="slotId">Слот экипировки.</param>
+    /// <param name="draft">Параметры предмета и бонусов.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns>Идентификатор записи инвентаря либо ошибка.</returns>
+    Task<Result<Guid>> CreateLocalAndEquipAsync(
+        Guid characterId,
+        Guid slotId,
+        LocalEquipmentDraft draft,
+        CancellationToken cancellationToken = default);
     /// <summary>
     /// Снимает предмет со слота экипировки. Сам предмет остаётся у персонажа.
     /// </summary>

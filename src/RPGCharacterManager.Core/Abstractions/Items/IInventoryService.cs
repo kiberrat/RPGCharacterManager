@@ -175,6 +175,29 @@ public sealed record InventoryState(
 public sealed record InventoryContainerOption(Guid? InventoryItemId, string Name);
 
 /// <summary>
+/// Данные локального предмета, принадлежащего только одному персонажу.
+/// </summary>
+/// <param name="Name">Название.</param>
+/// <param name="Description">Описание.</param>
+/// <param name="ItemType">Пользовательский тип предмета.</param>
+/// <param name="Weight">Вес одной единицы.</param>
+/// <param name="Price">Стоимость одной единицы.</param>
+/// <param name="Currency">Валюта стоимости.</param>
+/// <param name="IsWeapon">Предмет является оружием.</param>
+/// <param name="DamageFormula">Формула урона оружия.</param>
+/// <param name="DamageType">Тип урона оружия.</param>
+public sealed record LocalInventoryItemDraft(
+    string Name,
+    string? Description,
+    string? ItemType,
+    double Weight,
+    double Price,
+    string? Currency,
+    bool IsWeapon,
+    string? DamageFormula,
+    string? DamageType);
+
+/// <summary>
 /// Итог использования предмета.
 /// </summary>
 /// <param name="ItemName">Название использованного предмета.</param>
@@ -240,6 +263,16 @@ public interface IInventoryService
     Task<Result> AddAsync(
         Guid characterId,
         Guid itemId,
+        int count,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Создаёт предмет, доступный только указанному персонажу, и сразу
+    /// добавляет его в инвентарь.
+    /// </summary>
+    Task<Result> CreateLocalAsync(
+        Guid characterId,
+        LocalInventoryItemDraft draft,
         int count,
         CancellationToken cancellationToken = default);
 

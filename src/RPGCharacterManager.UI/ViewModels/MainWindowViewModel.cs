@@ -341,6 +341,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         DicePanel.Dispose();
     }
 
+    /// <summary>Открывает домашнюю страницу в новой вкладке или активирует её, если она уже открыта.</summary>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns>Задача открытия вкладки.</returns>
+    [RelayCommand]
+    private Task NewTabAsync(CancellationToken cancellationToken) =>
+        OpenDocumentAsync(DocumentIds.Overview, cancellationToken);
     /// <summary>
     /// Закрывает указанный документ рабочей области.
     /// </summary>

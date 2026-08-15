@@ -118,7 +118,8 @@ public sealed class EquipmentService : IEquipmentService
             .AsNoTracking()
             .Include(item => item.Bonuses)
             .Where(item => item.EquipmentSlotId == slotId)
-            .Where(item => item.GameSystemId == null || item.GameSystemId == systemId);
+            .Where(item => item.GameSystemId == null || item.GameSystemId == systemId)
+            .Where(item => item.OwnerCharacterId == null || item.OwnerCharacterId == characterId);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -183,7 +184,10 @@ public sealed class EquipmentService : IEquipmentService
 
             var item = await context.Items
                 .Include(entity => entity.EquipmentSlot)
-                .FirstOrDefaultAsync(entity => entity.Id == itemId, cancellationToken)
+                .FirstOrDefaultAsync(
+                    entity => entity.Id == itemId
+                        && (entity.OwnerCharacterId == null || entity.OwnerCharacterId == characterId),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             if (item is null)
@@ -265,6 +269,155 @@ public sealed class EquipmentService : IEquipmentService
         }
     }
 
+    /// <inheritdoc />
+    public async Task<Result<Guid>> CreateLocalAndEquipAsync(
+        Guid characterId,
+        Guid slotId,
+        LocalEquipmentDraft draft,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotNull(draft);
+
+        if (string.IsNullOrWhiteSpace(draft.Name))
+        {
+            return Result.Failure<Guid>("Введите название экипировки.");
+        }
+
+        if (!double.IsFinite(draft.Weight) || draft.Weight < 0 ||
+            !double.IsFinite(draft.Price) || draft.Price < 0)
+        {
+            return Result.Failure<Guid>("Вес и стоимость экипировки должны быть числами не меньше нуля.");
+        }
+
+        var invalidBonus = draft.Bonuses.FirstOrDefault(bonus =>
+            (bonus.Target == BonusTargetKind.Attribute && bonus.AttributeId is null) ||
+            (bonus.Target == BonusTargetKind.Resource && bonus.ResourceId is null) ||
+            ((bonus.Target == BonusTargetKind.Variable || bonus.Target == BonusTargetKind.Tag) &&
+                string.IsNullOrWhiteSpace(bonus.Name)) ||
+            (bonus.Target != BonusTargetKind.Tag && string.IsNullOrWhiteSpace(bonus.Formula)));
+
+        if (invalidBonus is not null)
+        {
+            return Result.Failure<Guid>(
+                "Заполните цель каждого бонуса; для числового бонуса также нужна формула.");
+        }
+
+        try
+        {
+            await using var context = await _contextFactory
+                .CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+            var character = await LoadCharacterAsync(context, characterId, tracked: true, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (character is null)
+            {
+                return Result.Failure<Guid>("Персонаж не найден: возможно, он был удалён.");
+            }
+
+            var slot = await context.EquipmentSlots
+                .FirstOrDefaultAsync(entity => entity.Id == slotId &&
+                    (entity.GameSystemId == null || entity.GameSystemId == character.GameSystemId),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (slot is null)
+            {
+                return Result.Failure<Guid>("Слот экипировки не найден.");
+            }
+
+            var capacity = Math.Max(1, slot.AllowMultiple ? slot.MaximumItems : 1);
+            if (character.Equipment.Count(record => record.SlotId == slotId) >= capacity)
+            {
+                return Result.Failure<Guid>($"Слот «{slot.Name}» уже заполнен.");
+            }
+
+            foreach (var bonus in draft.Bonuses)
+            {
+                if (bonus.AttributeId is { } attributeId &&
+                    !await context.Attributes.AnyAsync(attribute => attribute.Id == attributeId,
+                        cancellationToken).ConfigureAwait(false))
+                {
+                    return Result.Failure<Guid>("Одна из выбранных характеристик не найдена.");
+                }
+
+                if (bonus.ResourceId is { } resourceId &&
+                    !await context.Resources.AnyAsync(resource => resource.Id == resourceId,
+                        cancellationToken).ConfigureAwait(false))
+                {
+                    return Result.Failure<Guid>("Один из выбранных ресурсов не найден.");
+                }
+            }
+
+            var item = new Item
+            {
+                OwnerCharacterId = characterId,
+                GameSystemId = character.GameSystemId,
+                Name = draft.Name.Trim(),
+                SystemName = $"local_equipment_{characterId:N}_{Guid.NewGuid():N}",
+                Source = "Авторская экипировка персонажа",
+                Description = string.IsNullOrWhiteSpace(draft.Description) ? null : draft.Description.Trim(),
+                ItemType = string.IsNullOrWhiteSpace(draft.ItemType) ? "Авторская экипировка" : draft.ItemType.Trim(),
+                Rarity = string.IsNullOrWhiteSpace(draft.Rarity) ? null : draft.Rarity.Trim(),
+                Weight = draft.Weight,
+                Price = draft.Price,
+                Currency = string.IsNullOrWhiteSpace(draft.Currency) ? null : draft.Currency.Trim(),
+                EquipmentSlotId = slotId,
+                Stackable = false,
+            };
+
+            var order = 0;
+            foreach (var bonus in draft.Bonuses)
+            {
+                item.Bonuses.Add(new ItemBonus
+                {
+                    ItemId = item.Id,
+                    Target = bonus.Target,
+                    AttributeId = bonus.Target == BonusTargetKind.Attribute ? bonus.AttributeId : null,
+                    ResourceId = bonus.Target == BonusTargetKind.Resource ? bonus.ResourceId : null,
+                    Name = string.IsNullOrWhiteSpace(bonus.Name) ? null : bonus.Name.Trim(),
+                    Formula = bonus.Target == BonusTargetKind.Tag || string.IsNullOrWhiteSpace(bonus.Formula)
+                        ? null
+                        : bonus.Formula.Trim(),
+                    Condition = string.IsNullOrWhiteSpace(bonus.Condition) ? null : bonus.Condition.Trim(),
+                    SortOrder = order++,
+                });
+            }
+
+            var inventory = new InventoryItem
+            {
+                CharacterId = characterId,
+                ItemId = item.Id,
+                Item = item,
+                Count = 1,
+            };
+
+            var equipment = new CharacterEquipment
+            {
+                CharacterId = characterId,
+                SlotId = slotId,
+                InventoryItemId = inventory.Id,
+                InventoryItem = inventory,
+            };
+
+            context.Add(item);
+            context.Add(inventory);
+            context.Add(equipment);
+            context.Add(HistoryEntries.ItemEquipped(characterId, item.Name, slot.Name));
+
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            ItemsLog.ItemEquipped(_logger, character.Name, item.Name, slot.Name);
+            await PublishChangedAsync(characterId, cancellationToken).ConfigureAwait(false);
+
+            return Result.Success(inventory.Id);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            ItemsLog.EquipmentOperationFailed(_logger, exception, characterId);
+            return Result.Failure<Guid>($"Не удалось создать экипировку: {exception.Message}");
+        }
+    }
     /// <inheritdoc />
     public async Task<Result> UnequipAsync(
         Guid characterId,

@@ -526,6 +526,61 @@ public sealed class WeaponServiceTests
         Assert.Contains("магазина", result.Error, StringComparison.CurrentCulture);
     }
 
+    [Fact]
+    public async Task АвторскоеОружие_СохраняетХарактеристикиИПринадлежитОдномуПерсонажу()
+    {
+        await using var context = await CharacterTestContext.CreateAsync();
+
+        var strength = CharacterContent.Attribute("Сила", "сила", 16, HalfOfValue);
+        var mastery = CharacterContent.Skill("Воинское оружие", "воинское_оружие", strength.Id);
+        await context.AddAsync(strength);
+        await context.AddAsync(mastery);
+
+        var ownerId = await CreateCharacterAsync(context, "Кузнец");
+        var otherId = await CreateCharacterAsync(context, "Сосед");
+        var draft = new LocalWeaponDraft(
+            "Клинок бури",
+            "Авторский клинок.",
+            "Оружие",
+            "Воинское",
+            "1,5 м",
+            "рубящий",
+            "лёгкое, фехтовальное",
+            "1к20",
+            "характеристика + 2",
+            "1к8 + характеристика",
+            "урон + 8",
+            19,
+            strength.Id,
+            mastery.Id,
+            1.5,
+            100,
+            "зм");
+
+        var created = await context.Weapons.CreateLocalAsync(ownerId, draft);
+        Assert.True(created.IsSuccess, created.Error);
+
+        var weapon = await LoadWeaponAsync(context, ownerId);
+        Assert.Equal(created.Value, weapon.InventoryItemId);
+        Assert.Equal("Клинок бури", weapon.Name);
+        Assert.Equal("Воинское", weapon.Category);
+        Assert.Equal("1,5 м", weapon.Range);
+        Assert.Equal("рубящий", weapon.DamageType);
+        Assert.Equal("1к20", weapon.AttackDiceFormula);
+        Assert.Equal("характеристика + 2", weapon.AttackBonusFormula);
+        Assert.Equal("1к8 + характеристика", weapon.DamageFormula);
+        Assert.Equal("урон + 8", weapon.CriticalFormula);
+        Assert.Equal(19, weapon.CriticalThreshold);
+        Assert.Equal("Сила", weapon.ScalingAttributeName);
+        Assert.Equal("Воинское оружие", weapon.ProficiencySkillName);
+        Assert.Contains("лёгкое", weapon.Properties);
+
+        var otherOptions = await context.Weapons.GetAvailableWeaponsAsync(otherId, null, true);
+        Assert.DoesNotContain(otherOptions.Options, option => option.Id == weapon.ItemId);
+
+        var forbidden = await context.Weapons.AddAsync(otherId, weapon.ItemId);
+        Assert.True(forbidden.IsFailure);
+    }
     // ---------- Выдача оружия и журнал ----------
 
     [Fact]

@@ -125,7 +125,8 @@ public sealed class InventoryService : IInventoryService
         var query = context.Items
             .AsNoTracking()
             .Include(item => item.Category)
-            .Where(item => item.GameSystemId == null || item.GameSystemId == systemId);
+            .Where(item => item.GameSystemId == null || item.GameSystemId == systemId)
+            .Where(item => item.OwnerCharacterId == null || item.OwnerCharacterId == characterId);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -174,7 +175,10 @@ public sealed class InventoryService : IInventoryService
             async (context, character, formulaContext) =>
             {
                 var item = await context.Items
-                    .FirstOrDefaultAsync(entity => entity.Id == itemId, cancellationToken)
+                    .FirstOrDefaultAsync(
+                        entity => entity.Id == itemId
+                            && (entity.OwnerCharacterId == null || entity.OwnerCharacterId == characterId),
+                        cancellationToken)
                     .ConfigureAwait(false);
 
                 if (item is null)
@@ -191,6 +195,83 @@ public sealed class InventoryService : IInventoryService
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
+    public Task<Result> CreateLocalAsync(
+        Guid characterId,
+        LocalInventoryItemDraft draft,
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotNull(draft);
+
+        if (string.IsNullOrWhiteSpace(draft.Name))
+        {
+            return Task.FromResult(Result.Failure("Введите название локального предмета."));
+        }
+
+        if (count <= 0)
+        {
+            return Task.FromResult(Result.Failure("Количество должно быть больше нуля."));
+        }
+
+        if (draft.Weight < 0 || draft.Price < 0)
+        {
+            return Task.FromResult(Result.Failure("Вес и стоимость не могут быть отрицательными."));
+        }
+
+        return ChangeAsync(
+            characterId,
+            "Не удалось создать локальный предмет",
+            (context, character, formulaContext) =>
+            {
+                var itemId = Guid.NewGuid();
+                var name = draft.Name.Trim();
+                var item = new Item
+                {
+                    Id = itemId,
+                    OwnerCharacterId = character.Id,
+                    GameSystemId = character.GameSystemId,
+                    Name = name,
+                    SystemName = $"local_{character.Id:N}_{itemId:N}",
+                    Description = string.IsNullOrWhiteSpace(draft.Description)
+                        ? null
+                        : draft.Description.Trim(),
+                    Source = $"Локально у {character.Name}",
+                    ItemType = draft.IsWeapon
+                        ? "Оружие"
+                        : string.IsNullOrWhiteSpace(draft.ItemType)
+                            ? "Авторский предмет"
+                            : draft.ItemType.Trim(),
+                    Weight = draft.Weight,
+                    Price = draft.Price,
+                    Currency = string.IsNullOrWhiteSpace(draft.Currency) ? null : draft.Currency.Trim(),
+                    Stackable = true,
+                };
+
+                if (draft.IsWeapon)
+                {
+                    item.Weapon = new Weapon
+                    {
+                        ItemId = item.Id,
+                        AttackDiceFormula = "1к20",
+                        DamageFormula = string.IsNullOrWhiteSpace(draft.DamageFormula)
+                            ? "1к6"
+                            : draft.DamageFormula.Trim(),
+                        DamageType = string.IsNullOrWhiteSpace(draft.DamageType)
+                            ? null
+                            : draft.DamageType.Trim(),
+                        CriticalThreshold = 20,
+                    };
+                }
+
+                context.Add(item);
+                Give(character, item, count, formulaContext, context);
+                ItemsLog.ItemAdded(_logger, character.Name, item.Name, count);
+
+                return Task.FromResult(Result.Success());
+            },
+            cancellationToken);
+    }
     /// <inheritdoc />
     public Task<Result> ChangeCountAsync(
         Guid characterId,

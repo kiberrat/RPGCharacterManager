@@ -113,6 +113,83 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
 
     [ObservableProperty]
     private CharacterOptionViewModel? _selectedAvailableWeapon;
+    [ObservableProperty]
+    private bool _isLocalWeaponEditorOpen;
+
+    [ObservableProperty]
+    private string _localWeaponName = string.Empty;
+
+    [ObservableProperty]
+    private string _localWeaponDescription = string.Empty;
+
+    [ObservableProperty]
+    private string _localWeaponItemType = "Оружие";
+
+    [ObservableProperty]
+    private string _localWeaponCategory = string.Empty;
+
+    [ObservableProperty]
+    private string _localWeaponRange = string.Empty;
+
+    [ObservableProperty]
+    private string _localWeaponDamageType = string.Empty;
+
+    [ObservableProperty]
+    private string _localWeaponProperties = string.Empty;
+
+    [ObservableProperty]
+    private string _localWeaponAttackDiceFormula = "1к20";
+
+    [ObservableProperty]
+    private string _localWeaponAttackFormula = "характеристика + бонус_мастерства";
+
+    [ObservableProperty]
+    private string _localWeaponDamageFormula = "1к6 + характеристика";
+
+    [ObservableProperty]
+    private string _localWeaponCriticalFormula = "урон + 1к6";
+
+    [ObservableProperty]
+    private int? _localWeaponCriticalThreshold = 20;
+
+    [ObservableProperty]
+    private LocalContentReferenceOption? _localWeaponScalingAttribute;
+
+    [ObservableProperty]
+    private LocalContentReferenceOption? _localWeaponProficiencySkill;
+
+    [ObservableProperty]
+    private double _localWeaponWeight;
+
+    [ObservableProperty]
+    private double _localWeaponPrice;
+
+    [ObservableProperty]
+    private string _localWeaponCurrency = string.Empty;
+
+    [ObservableProperty]
+    private bool _isLocalEquipmentEditorOpen;
+
+    [ObservableProperty]
+    private string _localEquipmentName = string.Empty;
+
+    [ObservableProperty]
+    private string _localEquipmentDescription = string.Empty;
+
+    [ObservableProperty]
+    private string _localEquipmentItemType = "Экипировка";
+
+    [ObservableProperty]
+    private string _localEquipmentRarity = string.Empty;
+
+    [ObservableProperty]
+    private double _localEquipmentWeight;
+
+    [ObservableProperty]
+    private double _localEquipmentPrice;
+
+    [ObservableProperty]
+    private string _localEquipmentCurrency = string.Empty;
 
     [ObservableProperty]
     private bool _isCustomFieldEditorOpen;
@@ -161,6 +238,12 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
 
     [ObservableProperty]
     private string _manaSaveStatus = "Сохраняется автоматически";
+
+    [ObservableProperty]
+    private bool _isManaDrawerOpen;
+
+    [ObservableProperty]
+    private bool _isMoneyDrawerOpen;
 
     /// <summary>Для выбранной зависимости требуется поле значения.</summary>
     public bool IsAbilityDependencyValueVisible => NewAbilityDependency?.RequiresValue == true;
@@ -253,6 +336,13 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
             new("custom", "Своё условие", "Введите условие, например: харизма >= 16 и уровень >= 5.", true),
         ];
 
+        LocalEquipmentBonusTargets =
+        [
+            new(BonusTargetKind.Attribute, "Характеристика"),
+            new(BonusTargetKind.Resource, "Максимум ресурса"),
+            new(BonusTargetKind.Variable, "Переменная"),
+            new(BonusTargetKind.Tag, "Тег / признак"),
+        ];
         _newFieldType = FieldTypes[0];
         _newAbilityDependency = AbilityDependencyOptions[0];
     }
@@ -310,6 +400,26 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
 
     /// <summary>Слоты экипировки персонажа.</summary>
     public ObservableCollection<EquipmentSlotViewModel> EquipmentSlots { get; } = [];
+    /// <summary>Слоты, показанные слева от силуэта.</summary>
+    public ObservableCollection<EquipmentSlotViewModel> LeftEquipmentSlots { get; } = [];
+
+    /// <summary>Слоты, показанные справа от силуэта.</summary>
+    public ObservableCollection<EquipmentSlotViewModel> RightEquipmentSlots { get; } = [];
+
+    /// <summary>Характеристики для масштабирования оружия и бонусов экипировки.</summary>
+    public ObservableCollection<LocalContentReferenceOption> LocalAttributeOptions { get; } = [];
+
+    /// <summary>Навыки владения для оружия.</summary>
+    public ObservableCollection<LocalContentReferenceOption> LocalSkillOptions { get; } = [];
+
+    /// <summary>Ресурсы для бонусов экипировки.</summary>
+    public ObservableCollection<LocalContentReferenceOption> LocalResourceOptions { get; } = [];
+
+    /// <summary>Виды целей бонусов экипировки.</summary>
+    public IReadOnlyList<LocalBonusTargetOption> LocalEquipmentBonusTargets { get; }
+
+    /// <summary>Бонусы создаваемой экипировки.</summary>
+    public ObservableCollection<LocalEquipmentBonusViewModel> LocalEquipmentBonuses { get; } = [];
 
     /// <summary>Разделы формы описания персонажа.</summary>
     public ObservableCollection<ContentFieldGroupViewModel> FieldGroups { get; } = [];
@@ -419,13 +529,20 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
     }
 
     /// <summary>
-    /// Перечитывает лист персонажа, отбрасывая несохранённые изменения.
+    /// Сохраняет несохранённые изменения, затем перечитывает лист персонажа.
     /// </summary>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <returns>Задача, завершающаяся после загрузки.</returns>
     [RelayCommand]
     private async Task ReloadAsync(CancellationToken cancellationToken)
     {
+        // Кнопка «Обновить» не должна превращаться в скрытый сброс введённых хитов
+        // и других полей: пользовательские изменения сначала сохраняются.
+        if (HasUnsavedChanges && _sheet is not null)
+        {
+            await SaveAsync(cancellationToken).ConfigureAwait(true);
+            return;
+        }
         IsBusy = true;
 
         try
@@ -688,10 +805,67 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
 
         if (IsWeaponPickerOpen)
         {
+            IsLocalWeaponEditorOpen = false;
             await ReloadAvailableWeaponsAsync(cancellationToken).ConfigureAwait(true);
         }
     }
 
+    /// <summary>Открывает или закрывает форму создания авторского оружия.</summary>
+    [RelayCommand]
+    private void ToggleLocalWeaponEditor()
+    {
+        IsLocalWeaponEditorOpen = !IsLocalWeaponEditorOpen;
+
+        if (IsLocalWeaponEditorOpen)
+        {
+            IsWeaponPickerOpen = false;
+            AvailableWeapons.Clear();
+            SelectedAvailableWeapon = null;
+        }
+    }
+
+    /// <summary>Создаёт авторское оружие и сразу выдаёт его персонажу.</summary>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns>Задача создания.</returns>
+    [RelayCommand]
+    private async Task CreateLocalWeaponAsync(CancellationToken cancellationToken)
+    {
+        var draft = new LocalWeaponDraft(
+            LocalWeaponName,
+            LocalWeaponDescription,
+            LocalWeaponItemType,
+            LocalWeaponCategory,
+            LocalWeaponRange,
+            LocalWeaponDamageType,
+            LocalWeaponProperties,
+            LocalWeaponAttackDiceFormula,
+            LocalWeaponAttackFormula,
+            LocalWeaponDamageFormula,
+            LocalWeaponCriticalFormula,
+            LocalWeaponCriticalThreshold,
+            LocalWeaponScalingAttribute?.Id,
+            LocalWeaponProficiencySkill?.Id,
+            LocalWeaponWeight,
+            LocalWeaponPrice,
+            LocalWeaponCurrency);
+
+        var result = await _weapons.CreateLocalAsync(_characterId, draft, cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+        {
+            await _dialogs.ShowErrorAsync("Создание оружия", result.Error ?? "Неизвестная ошибка.")
+                .ConfigureAwait(true);
+            return;
+        }
+
+        var name = LocalWeaponName.Trim();
+        ResetLocalWeaponDraft();
+        IsLocalWeaponEditorOpen = false;
+        await ReloadWeaponsAsync(cancellationToken).ConfigureAwait(true);
+        await Inventory.ReloadAsync(cancellationToken).ConfigureAwait(true);
+        _notifications.Show($"Оружие «{name}» создано и выдано", NotificationKind.Success);
+    }
     /// <summary>
     /// Выдаёт персонажу выбранное оружие.
     /// </summary>
@@ -857,6 +1031,96 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
         ShowResult(card.InventoryItemId, "Запас боеприпасов изменён.");
     }
 
+    /// <summary>Закрывает обе панели экипировки.</summary>
+    [RelayCommand]
+    private void CloseEquipmentPanels()
+    {
+        SelectedEquipmentSlot = null;
+        SelectedAvailableEquipment = null;
+        AvailableEquipment.Clear();
+        IsLocalEquipmentEditorOpen = false;
+    }
+
+    /// <summary>Закрывает только редактор новой экипировки.</summary>
+    [RelayCommand]
+    private void CloseLocalEquipmentEditor() => IsLocalEquipmentEditorOpen = false;
+
+    /// <summary>Открывает редактор авторской экипировки для выбранного слота.</summary>
+    [RelayCommand]
+    private void OpenLocalEquipmentEditor()
+    {
+        if (SelectedEquipmentSlot is null)
+        {
+            return;
+        }
+
+        IsLocalEquipmentEditorOpen = true;
+        if (LocalEquipmentBonuses.Count == 0)
+        {
+            AddLocalEquipmentBonus();
+        }
+    }
+
+    /// <summary>Добавляет ещё один бонус создаваемой экипировки.</summary>
+    [RelayCommand]
+    private void AddLocalEquipmentBonus() => LocalEquipmentBonuses.Add(
+        new LocalEquipmentBonusViewModel(
+            LocalEquipmentBonusTargets,
+            LocalAttributeOptions,
+            LocalResourceOptions));
+
+    /// <summary>Удаляет бонус из создаваемой экипировки.</summary>
+    /// <param name="bonus">Удаляемая строка.</param>
+    [RelayCommand]
+    private void RemoveLocalEquipmentBonus(LocalEquipmentBonusViewModel? bonus)
+    {
+        if (bonus is not null)
+        {
+            LocalEquipmentBonuses.Remove(bonus);
+        }
+    }
+
+    /// <summary>Создаёт авторскую экипировку и сразу надевает её.</summary>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns>Задача создания.</returns>
+    [RelayCommand]
+    private async Task CreateLocalEquipmentAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedEquipmentSlot is not { } slot)
+        {
+            return;
+        }
+
+        var draft = new LocalEquipmentDraft(
+            LocalEquipmentName,
+            LocalEquipmentDescription,
+            LocalEquipmentItemType,
+            LocalEquipmentRarity,
+            LocalEquipmentWeight,
+            LocalEquipmentPrice,
+            LocalEquipmentCurrency,
+            LocalEquipmentBonuses.Select(bonus => bonus.ToDraft()).ToList());
+
+        var result = await _equipment
+            .CreateLocalAndEquipAsync(_characterId, slot.SlotId, draft, cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+        {
+            await _dialogs.ShowErrorAsync("Создание экипировки", result.Error ?? "Неизвестная ошибка.")
+                .ConfigureAwait(true);
+            return;
+        }
+
+        var name = LocalEquipmentName.Trim();
+        ResetLocalEquipmentDraft();
+        IsLocalEquipmentEditorOpen = false;
+        SelectedEquipmentSlot = null;
+        AvailableEquipment.Clear();
+        await ReloadAsync(cancellationToken).ConfigureAwait(true);
+        await Inventory.ReloadAsync(cancellationToken).ConfigureAwait(true);
+        _notifications.Show($"Экипировка «{name}» создана и надета", NotificationKind.Success);
+    }
     /// <summary>
     /// Открывает список предметов, которые персонаж может надеть в слот.
     /// </summary>
@@ -870,6 +1134,7 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
     {
         // Повторный щелчок по тому же слоту закрывает список.
         SelectedEquipmentSlot = SelectedEquipmentSlot?.SlotId == slot?.SlotId ? null : slot;
+        IsLocalEquipmentEditorOpen = false;
 
         AvailableEquipment.Clear();
 
@@ -1194,6 +1459,28 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
 
         await ReloadAsync(cancellationToken).ConfigureAwait(true);
     }
+    [RelayCommand]
+    private void ToggleManaDrawer()
+    {
+        IsManaDrawerOpen = !IsManaDrawerOpen;
+
+        if (IsManaDrawerOpen)
+        {
+            IsMoneyDrawerOpen = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleMoneyDrawer()
+    {
+        IsMoneyDrawerOpen = !IsMoneyDrawerOpen;
+
+        if (IsMoneyDrawerOpen)
+        {
+            IsManaDrawerOpen = false;
+        }
+    }
+
 
     [RelayCommand]
     private void IncreaseMana() => ManaCurrent += 1;
@@ -1346,6 +1633,7 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
             FillAttributes(sheet);
             FillSkills(sheet);
             FillResources(sheet);
+            FillLocalEditorOptions(sheet);
             FillTraits(sheet);
             FillAbilities(sheet);
             FillCurrencies(sheet);
@@ -1445,6 +1733,26 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
         OnPropertyChanged(nameof(HasNoResources));
     }
 
+    private void FillLocalEditorOptions(CharacterSheet sheet)
+    {
+        LocalAttributeOptions.Clear();
+        foreach (var attribute in sheet.Attributes.Where(attribute => !attribute.IsHidden).OrderBy(attribute => attribute.Name))
+        {
+            LocalAttributeOptions.Add(new LocalContentReferenceOption(attribute.Id, attribute.Name));
+        }
+
+        LocalSkillOptions.Clear();
+        foreach (var skill in sheet.Skills.OrderBy(skill => skill.Name))
+        {
+            LocalSkillOptions.Add(new LocalContentReferenceOption(skill.Id, skill.Name));
+        }
+
+        LocalResourceOptions.Clear();
+        foreach (var resource in sheet.Resources.OrderBy(resource => resource.Name))
+        {
+            LocalResourceOptions.Add(new LocalContentReferenceOption(resource.Id, resource.Name));
+        }
+    }
     private void FillTraits(CharacterSheet sheet)
     {
         var stored = sheet.Character.Traits.ToDictionary(trait => trait.TraitId);
@@ -1572,15 +1880,60 @@ public sealed partial class CharacterSheetViewModel : DocumentViewModelBase, ICh
         }
 
         EquipmentSlots.Clear();
+        LeftEquipmentSlots.Clear();
+        RightEquipmentSlots.Clear();
 
+        var index = 0;
         foreach (var slot in result.Value)
         {
-            EquipmentSlots.Add(new EquipmentSlotViewModel(slot));
+            var viewModel = new EquipmentSlotViewModel(slot);
+            EquipmentSlots.Add(viewModel);
+
+            if (index++ % 2 == 0)
+            {
+                LeftEquipmentSlots.Add(viewModel);
+            }
+            else
+            {
+                RightEquipmentSlots.Add(viewModel);
+            }
         }
 
         OnPropertyChanged(nameof(HasNoEquipmentSlots));
     }
 
+    private void ResetLocalWeaponDraft()
+    {
+        LocalWeaponName = string.Empty;
+        LocalWeaponDescription = string.Empty;
+        LocalWeaponItemType = "Оружие";
+        LocalWeaponCategory = string.Empty;
+        LocalWeaponRange = string.Empty;
+        LocalWeaponDamageType = string.Empty;
+        LocalWeaponProperties = string.Empty;
+        LocalWeaponAttackDiceFormula = "1к20";
+        LocalWeaponAttackFormula = "характеристика + бонус_мастерства";
+        LocalWeaponDamageFormula = "1к6 + характеристика";
+        LocalWeaponCriticalFormula = "урон + 1к6";
+        LocalWeaponCriticalThreshold = 20;
+        LocalWeaponScalingAttribute = null;
+        LocalWeaponProficiencySkill = null;
+        LocalWeaponWeight = 0;
+        LocalWeaponPrice = 0;
+        LocalWeaponCurrency = string.Empty;
+    }
+
+    private void ResetLocalEquipmentDraft()
+    {
+        LocalEquipmentName = string.Empty;
+        LocalEquipmentDescription = string.Empty;
+        LocalEquipmentItemType = "Экипировка";
+        LocalEquipmentRarity = string.Empty;
+        LocalEquipmentWeight = 0;
+        LocalEquipmentPrice = 0;
+        LocalEquipmentCurrency = string.Empty;
+        LocalEquipmentBonuses.Clear();
+    }
     /// <summary>
     /// Показывает результат действия в карточке оружия, пережившей перечитывание списка.
     /// </summary>

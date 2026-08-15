@@ -548,6 +548,47 @@ public sealed class InventoryServiceTests
         Assert.Equal(["Перо", "Щит", "Кинжал"], byPrice.Entries.Select(entry => entry.Name));
     }
 
+    [Fact]
+    public async Task ЛокальныйПредмет_ПринадлежитТолькоСоздавшемуЕгоПерсонажу()
+    {
+        await using var context = await CharacterTestContext.CreateAsync();
+
+        var ownerId = await CreateCharacterAsync(context);
+        var otherCharacterId = await CreateCharacterAsync(context);
+        var draft = new LocalInventoryItemDraft(
+            "Клинок снов",
+            "Авторское оружие персонажа.",
+            "Оружие",
+            1.5,
+            125,
+            "зм",
+            true,
+            "2к6",
+            "психический");
+
+        var created = await context.Inventory.CreateLocalAsync(ownerId, draft, 1);
+        Assert.True(created.IsSuccess, created.Error);
+
+        var entry = Assert.Single((await LoadAsync(context, ownerId)).Entries);
+        Assert.Equal("Клинок снов", entry.Name);
+        Assert.Equal("Авторское оружие персонажа.", entry.Description);
+        Assert.Equal("Оружие", entry.ItemType);
+
+        var otherOptions = await context.Inventory.GetAvailableItemsAsync(otherCharacterId, null);
+        Assert.DoesNotContain(otherOptions.Options, option => option.Id == entry.ItemId);
+
+        var forbidden = await context.Inventory.AddAsync(otherCharacterId, entry.ItemId, 1);
+        Assert.True(forbidden.IsFailure);
+
+        await using var database = await context.CreateContextAsync();
+        var stored = await database.Items
+            .Include(item => item.Weapon)
+            .SingleAsync(item => item.Id == entry.ItemId);
+        Assert.Equal(ownerId, stored.OwnerCharacterId);
+        Assert.NotNull(stored.Weapon);
+        Assert.Equal("2к6", stored.Weapon.DamageFormula);
+        Assert.Equal("психический", stored.Weapon.DamageType);
+    }
     // ---------- Количество ----------
 
     [Fact]

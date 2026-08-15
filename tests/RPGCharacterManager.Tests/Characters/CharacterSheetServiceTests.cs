@@ -107,6 +107,35 @@ public sealed class CharacterSheetServiceTests
     }
 
     [Fact]
+    public async Task АвторскийМаксимумРесурса_НеОбнуляетсяИСохраняется()
+    {
+        await using var context = await CharacterTestContext.CreateAsync();
+
+        var characterId = await CreateCharacterAsync(context);
+        await context.AddAsync(CharacterContent.Resource("Хиты", "хиты", "0"));
+        var sheet = await LoadAsync(context, characterId);
+        var resource = Assert.Single(sheet.Character.Resources);
+
+        resource.Current = 17;
+        resource.Maximum = 25;
+        resource.MaximumOverride = 25;
+
+        var saved = await context.Sheets.SaveAsync(sheet.Character, new Dictionary<Guid, string?>());
+        Assert.True(saved.IsSuccess, saved.Error);
+
+        var savedResource = Assert.Single(saved.Value.Resources);
+        Assert.Equal(17, savedResource.Current);
+        Assert.Equal(25, savedResource.Maximum);
+        Assert.True(savedResource.IsMaximumOverridden);
+        Assert.Equal(0, savedResource.CalculatedMaximum);
+
+        var reloaded = await LoadAsync(context, characterId);
+        var persisted = Assert.Single(reloaded.Resources);
+        Assert.Equal(17, persisted.Current);
+        Assert.Equal(25, persisted.Maximum);
+        Assert.True(persisted.IsMaximumOverridden);
+    }
+    [Fact]
     public async Task АвторскийБонусМастерства_СохраняетсяПересчитываетНавыкИСбрасывается()
     {
         await using var context = await CharacterTestContext.CreateAsync();

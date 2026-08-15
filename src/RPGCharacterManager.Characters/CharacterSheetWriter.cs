@@ -26,7 +26,7 @@ internal static class CharacterSheetWriter
         ApplyDescription(source, target);
         ApplyAttributes(source, target, added);
         ApplySkills(source, target, added);
-        ApplyResources(source, target);
+        ApplyResources(source, target, added);
         ApplyTraits(source, target, added);
     }
 
@@ -130,12 +130,12 @@ internal static class CharacterSheetWriter
     }
 
     /// <summary>
-    /// Переносит текущие значения ресурсов.
-    /// Максимум не переносится: его задаёт формула ресурса.
+    /// Переносит текущие значения и авторские максимумы ресурсов.
     /// </summary>
     /// <param name="source">Персонаж, изменённый на листе.</param>
     /// <param name="target">Сохранённая запись персонажа.</param>
-    private static void ApplyResources(Character source, Character target)
+    /// <param name="added">Список созданных записей.</param>
+    private static void ApplyResources(Character source, Character target, ICollection<object> added)
     {
         var stored = target.Resources.ToDictionary(resource => resource.ResourceId);
 
@@ -144,7 +144,21 @@ internal static class CharacterSheetWriter
             if (stored.TryGetValue(resource.ResourceId, out var existing))
             {
                 existing.Current = resource.Current;
+                existing.MaximumOverride = resource.MaximumOverride;
+                continue;
             }
+
+            var created = new CharacterResource
+            {
+                CharacterId = target.Id,
+                ResourceId = resource.ResourceId,
+                Current = resource.Current,
+                Maximum = resource.Maximum,
+                MaximumOverride = resource.MaximumOverride,
+            };
+
+            target.Resources.Add(created);
+            added.Add(created);
         }
     }
 

@@ -82,6 +82,15 @@ public class ItemUseEffect : EntityBase
 /// </summary>
 public class Item : ContentEntity
 {
+    /// <summary>
+    /// Персонаж-владелец локального предмета.
+    /// Пустое значение означает обычный предмет общего каталога.
+    /// </summary>
+    public Guid? OwnerCharacterId { get; set; }
+
+    /// <summary>Персонаж-владелец локального предмета.</summary>
+    public Character? OwnerCharacter { get; set; }
+
     /// <summary>Тип предмета, задаваемый игровой системой.</summary>
     public string? ItemType { get; set; }
 

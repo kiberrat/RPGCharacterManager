@@ -117,14 +117,16 @@ internal static class CharacterWriter
                 continue;
             }
 
-            if (!AreEqual(value.Maximum, resource.Maximum))
+            var effectiveMaximum = Math.Max(0, value.MaximumOverride ?? resource.Maximum);
+
+            if (!AreEqual(value.Maximum, effectiveMaximum))
             {
                 changes.Add(
-                    $"{resource.Name}, максимум: {Format(value.Maximum)} → {Format(resource.Maximum)}");
+                    $"{resource.Name}, максимум: {Format(value.Maximum)} → {Format(effectiveMaximum)}");
             }
 
-            value.Maximum = resource.Maximum;
-            value.Current = Math.Min(value.Current, resource.Maximum);
+            value.Maximum = effectiveMaximum;
+            value.Current = Math.Min(value.Current, effectiveMaximum);
         }
     }
 
