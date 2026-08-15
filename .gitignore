@@ -31,3 +31,5 @@ tools/dotnet-ef.exe
 tools/dotnet-ef/
 
 tools/.store/
+
+.clasp.json
