@@ -1,10 +1,50 @@
 using System.Globalization;
 using Avalonia.Media;
+using RPGCharacterManager.Core.Abstractions.Characters;
 using RPGCharacterManager.Core.Abstractions.Dice;
 using RPGCharacterManager.Shared.Guards;
 using RPGCharacterManager.UI.ViewModels.Characters;
 
 namespace RPGCharacterManager.UI.ViewModels.Dice;
+
+/// <summary>Готовая проверка навыка или спасбросок активного персонажа.</summary>
+public sealed class CharacterRollOptionViewModel
+{
+    /// <summary>Создаёт пункт быстрого броска из рассчитанного навыка.</summary>
+    public CharacterRollOptionViewModel(SheetSkill skill, bool isSavingThrow)
+    {
+        Skill = Guard.NotNull(skill);
+        IsSavingThrow = isSavingThrow;
+    }
+
+    /// <summary>Рассчитанный навык.</summary>
+    public SheetSkill Skill { get; }
+
+    /// <summary>Это спасбросок, а не обычная проверка навыка.</summary>
+    public bool IsSavingThrow { get; }
+
+    /// <summary>Название в списке выбора.</summary>
+    public string DisplayName => $"{Skill.Name} ({FormatSigned(Skill.Value)})";
+
+    /// <summary>Название, сохраняемое в истории бросков.</summary>
+    public string Title => IsSavingThrow
+        ? $"Спасбросок: {Skill.Name}"
+        : $"Проверка навыка: {Skill.Name}";
+
+    /// <summary>Формула d20 с итоговым рассчитанным бонусом.</summary>
+    public string Expression => Skill.Value switch
+    {
+        > 0 => $"1d20 + {FormatNumber(Skill.Value)}",
+        < 0 => $"1d20 - {FormatNumber(Math.Abs(Skill.Value))}",
+        _ => "1d20",
+    };
+
+    private static string FormatSigned(double value) =>
+        value < 0 ? SheetNumber.Format(value) : $"+{SheetNumber.Format(value)}";
+
+    private static string FormatNumber(double value) =>
+        value.ToString("0.################", CultureInfo.InvariantCulture);
+}
 
 /// <summary>
 /// Кнопка кубика в панели бросков.

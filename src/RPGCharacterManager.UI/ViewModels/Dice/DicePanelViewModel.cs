@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using RPGCharacterManager.Core.Abstractions.Characters;
 using RPGCharacterManager.Core.Abstractions.Dice;
 using RPGCharacterManager.Core.Abstractions.Engine;
 using RPGCharacterManager.Core.Abstractions.Infrastructure;
@@ -29,8 +30,10 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
     public const int MaximumCount = 50;
 
     private readonly IDiceService _dice;
+    private readonly ICharacterSheetService _sheets;
     private readonly ISettingsService _settings;
-    private readonly IDisposable _subscription;
+    private readonly IDisposable _settingsSubscription;
+    private readonly IDisposable _characterSubscription;
 
     private Guid? _characterId;
 
@@ -73,6 +76,15 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private bool _showFavorites;
 
+    [ObservableProperty]
+    private bool _isLoadingCharacterRolls;
+
+    [ObservableProperty]
+    private CharacterRollOptionViewModel? _selectedSavingThrow;
+
+    [ObservableProperty]
+    private CharacterRollOptionViewModel? _selectedSkillCheck;
+
     /// <summary>
     /// Нажатие на кубик добавляет его к выражению, а не бросает сразу.
     ///
@@ -86,12 +98,14 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
     /// Создаёт модель представления панели бросков.
     /// </summary>
     /// <param name="dice">Служба бросков.</param>
+    /// <param name="sheets">Служба листов персонажей: источник рассчитанных бонусов проверок.</param>
     /// <param name="formulas">Движок формул для встроенного калькулятора.</param>
     /// <param name="settings">Служба настроек.</param>
     /// <param name="eventBus">Шина событий приложения.</param>
     /// <param name="dispatcher">Диспетчер потока пользовательского интерфейса.</param>
     public DicePanelViewModel(
         IDiceService dice,
+        ICharacterSheetService sheets,
         IFormulaEngine formulas,
         ISettingsService settings,
         IEventBus eventBus,
@@ -101,6 +115,7 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
         Guard.NotNull(dispatcher);
 
         _dice = Guard.NotNull(dice);
+        _sheets = Guard.NotNull(sheets);
         _settings = Guard.NotNull(settings);
         Calculator = new CalculatorViewModel(Guard.NotNull(formulas));
 
@@ -108,7 +123,8 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
 
         // Полёт кубика включается и выключается в настройках, поэтому панель
         // следит за ними и не требует перезапуска приложения.
-        _subscription = eventBus.SubscribeOnUiThread<SettingsChangedEvent>(dispatcher, OnSettingsChanged);
+        _settingsSubscription = eventBus.SubscribeOnUiThread<SettingsChangedEvent>(dispatcher, OnSettingsChanged);
+        _characterSubscription = eventBus.SubscribeOnUiThread<CharacterChangedEvent>(dispatcher, OnCharacterChanged);
     }
 
     /// <summary>Кубики, доступные для броска.</summary>
@@ -119,6 +135,12 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
 
     /// <summary>Любимые броски.</summary>
     public ObservableCollection<RollRowViewModel> Favorites { get; } = [];
+
+    /// <summary>Спасброски активного персонажа с уже рассчитанными бонусами.</summary>
+    public ObservableCollection<CharacterRollOptionViewModel> SavingThrows { get; } = [];
+
+    /// <summary>Проверки навыков активного персонажа с уже рассчитанными бонусами.</summary>
+    public ObservableCollection<CharacterRollOptionViewModel> SkillChecks { get; } = [];
 
     /// <summary>Обычный арифметический калькулятор под кубиками.</summary>
     public CalculatorViewModel Calculator { get; }
@@ -134,6 +156,16 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
 
     /// <summary>Показан лист персонажа, значения которого доступны формуле.</summary>
     public bool HasCharacter => _characterId is not null;
+
+    /// <summary>У активного персонажа настроены спасброски.</summary>
+    public bool HasSavingThrows => SavingThrows.Count > 0;
+
+    /// <summary>У активного персонажа настроены проверки навыков.</summary>
+    public bool HasSkillChecks => SkillChecks.Count > 0;
+
+    /// <summary>У активного персонажа пока нет ни навыков, ни спасбросков.</summary>
+    public bool HasNoCharacterRolls =>
+        HasCharacter && !IsLoadingCharacterRolls && !HasSavingThrows && !HasSkillChecks;
 
     /// <summary>Сообщение об ошибке показано.</summary>
     public bool HasError => !string.IsNullOrWhiteSpace(Error);
@@ -173,6 +205,7 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
         }
 
         await ReloadAsync(cancellationToken).ConfigureAwait(true);
+        await ReloadCharacterRollsAsync(cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>
@@ -185,14 +218,32 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
     /// <param name="characterName">Имя персонажа.</param>
     public void SetCharacter(Guid? characterId, string? characterName)
     {
+        var changed = _characterId != characterId;
         _characterId = characterId;
         CharacterName = characterName;
 
         OnPropertyChanged(nameof(HasCharacter));
+        OnPropertyChanged(nameof(HasNoCharacterRolls));
+
+        if (!changed)
+        {
+            return;
+        }
+
+        ClearCharacterRolls();
+
+        if (IsOpen && characterId is not null)
+        {
+            _ = ReloadCharacterRollsAsync(CancellationToken.None);
+        }
     }
 
     /// <inheritdoc />
-    public void Dispose() => _subscription.Dispose();
+    public void Dispose()
+    {
+        _settingsSubscription.Dispose();
+        _characterSubscription.Dispose();
+    }
 
     /// <summary>
     /// Показывает или скрывает панель бросков.
@@ -387,6 +438,31 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void SetDisadvantage() => Mode = RollMode.Disadvantage;
 
+    /// <summary>
+    /// Выполняет выбранную проверку навыка или спасбросок с итоговым бонусом персонажа.
+    /// </summary>
+    /// <param name="option">Проверка с рассчитанным бонусом.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns>Задача, завершающаяся после броска.</returns>
+    [RelayCommand]
+    private async Task RollCharacterAsync(
+        CharacterRollOptionViewModel? option,
+        CancellationToken cancellationToken)
+    {
+        if (option is null || _characterId is null)
+        {
+            return;
+        }
+
+        Expression = option.Expression;
+        Title = option.Title;
+        DieColor = null;
+
+        await PerformAsync(
+            new RollRequest(option.Expression, Mode, option.Title, _characterId),
+            cancellationToken).ConfigureAwait(true);
+    }
+
     /// <summary>Показывает журнал бросков.</summary>
     [RelayCommand]
     private void ShowHistoryList() => ShowFavorites = false;
@@ -473,6 +549,80 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>Перечитывает рассчитанные проверки активного персонажа.</summary>
+    private async Task ReloadCharacterRollsAsync(CancellationToken cancellationToken)
+    {
+        if (_characterId is not { } characterId)
+        {
+            ClearCharacterRolls();
+            return;
+        }
+
+        IsLoadingCharacterRolls = true;
+        OnPropertyChanged(nameof(HasNoCharacterRolls));
+
+        var result = await _sheets.LoadAsync(characterId, cancellationToken).ConfigureAwait(true);
+
+        // Пока лист загружался, пользователь мог открыть другого персонажа.
+        if (_characterId != characterId)
+        {
+            return;
+        }
+
+        IsLoadingCharacterRolls = false;
+
+        if (!result.IsSuccess)
+        {
+            ClearCharacterRolls();
+            Error = result.Error;
+            OnPropertyChanged(nameof(HasError));
+            return;
+        }
+
+        SavingThrows.Clear();
+        SkillChecks.Clear();
+
+        foreach (var skill in result.Value.Skills.OrderBy(skill => skill.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            var isSavingThrow = string.Equals(
+                skill.Category,
+                SheetCategories.SavingThrows,
+                StringComparison.OrdinalIgnoreCase);
+            var option = new CharacterRollOptionViewModel(skill, isSavingThrow);
+
+            if (isSavingThrow)
+            {
+                SavingThrows.Add(option);
+            }
+            else
+            {
+                SkillChecks.Add(option);
+            }
+        }
+
+        SelectedSavingThrow = SavingThrows.FirstOrDefault();
+        SelectedSkillCheck = SkillChecks.FirstOrDefault();
+        NotifyCharacterRollsChanged();
+    }
+
+    /// <summary>Очищает проверки, когда лист персонажа закрыт или заменён.</summary>
+    private void ClearCharacterRolls()
+    {
+        IsLoadingCharacterRolls = false;
+        SavingThrows.Clear();
+        SkillChecks.Clear();
+        SelectedSavingThrow = null;
+        SelectedSkillCheck = null;
+        NotifyCharacterRollsChanged();
+    }
+
+    private void NotifyCharacterRollsChanged()
+    {
+        OnPropertyChanged(nameof(HasSavingThrows));
+        OnPropertyChanged(nameof(HasSkillChecks));
+        OnPropertyChanged(nameof(HasNoCharacterRolls));
+    }
+
     private static void Fill(ObservableCollection<RollRowViewModel> target, IReadOnlyList<RollOutcome> source)
     {
         target.Clear();
@@ -503,6 +653,14 @@ public sealed partial class DicePanelViewModel : ViewModelBase, IDisposable
 
     private void OnSettingsChanged(SettingsChangedEvent notification) =>
         IsAnimated = notification.Settings.DiceAnimationEnabled;
+
+    private void OnCharacterChanged(CharacterChangedEvent notification)
+    {
+        if (notification.CharacterId == _characterId && IsOpen)
+        {
+            _ = ReloadCharacterRollsAsync(CancellationToken.None);
+        }
+    }
 
     partial void OnModeChanged(RollMode value)
     {

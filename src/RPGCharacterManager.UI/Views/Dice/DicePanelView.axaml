@@ -118,6 +118,61 @@
                         Command="{Binding SetDisadvantageCommand}" />
         </UniformGrid>
 
+        <!-- ===================== Проверки персонажа ===================== -->
+        <Border Classes="Карточка" IsVisible="{Binding HasCharacter}">
+          <StackPanel Spacing="8">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Проверки персонажа" Classes="Подзаголовок" />
+              <TextBlock Classes="Вторичный"
+                         Text="Бонус уже учитывает характеристику, владение, экипировку, эффекты и авторские изменения."
+                         TextWrapping="Wrap" />
+            </StackPanel>
+
+            <TextBlock Classes="Вторичный"
+                       Text="Пересчитываю проверки…"
+                       IsVisible="{Binding IsLoadingCharacterRolls}" />
+
+            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSavingThrows}">
+              <ComboBox Grid.Column="0"
+                        ItemsSource="{Binding SavingThrows}"
+                        SelectedItem="{Binding SelectedSavingThrow}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:CharacterRollOptionViewModel">
+                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Grid.Column="1"
+                      Margin="6,0,0,0"
+                      Content="Спасбросок"
+                      Command="{Binding RollCharacterCommand}"
+                      CommandParameter="{Binding SelectedSavingThrow}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSkillChecks}">
+              <ComboBox Grid.Column="0"
+                        ItemsSource="{Binding SkillChecks}"
+                        SelectedItem="{Binding SelectedSkillCheck}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:CharacterRollOptionViewModel">
+                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Grid.Column="1"
+                      Margin="6,0,0,0"
+                      Content="Проверка"
+                      Command="{Binding RollCharacterCommand}"
+                      CommandParameter="{Binding SelectedSkillCheck}" />
+            </Grid>
+
+            <TextBlock Classes="Вторичный"
+                       Text="На листе персонажа пока нет настроенных навыков или спасбросков."
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding HasNoCharacterRolls}" />
+          </StackPanel>
+        </Border>
+
         <!-- ===================== Формула ===================== -->
         <StackPanel Spacing="6">
           <TextBox Watermark="Название броска — необязательно"
