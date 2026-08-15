@@ -394,6 +394,9 @@ public static class StandardContentTypes
     private static IContentTypeDescriptor CreateItems() =>
         new ContentTypeBuilder<Item>(ContentTypeIds.Items, "Предметы", "Предмет")
             .Describe("Любой объект инвентаря: снаряжение, расходники, ценности.", 130)
+            // Локальные предметы принадлежат одному персонажу и не должны
+            // появляться в общем каталоге, экспорте паков и полях-ссылках.
+            .FilteredBy(item => item.OwnerCharacterId == null)
             // Два списка сразу: без разделения запроса строки бонусов и действий
             // перемножились бы между собой, и предмет читался бы тем медленнее,
             // чем подробнее он описан.

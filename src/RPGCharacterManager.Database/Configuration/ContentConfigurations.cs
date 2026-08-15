@@ -372,6 +372,11 @@ internal sealed class ItemConfiguration : ContentEntityConfiguration<Item>
         builder.Property(entity => entity.Requirements).HasMaxLength(FieldLengths.Expression);
         builder.Property(entity => entity.ChargesFormula).HasMaxLength(FieldLengths.Expression);
 
+        builder.HasOne(entity => entity.OwnerCharacter)
+            .WithMany()
+            .HasForeignKey(entity => entity.OwnerCharacterId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne(entity => entity.Weapon)
             .WithOne(weapon => weapon.Item)
             .HasForeignKey<Weapon>(weapon => weapon.ItemId)
@@ -404,6 +409,7 @@ internal sealed class ItemConfiguration : ContentEntityConfiguration<Item>
         builder.HasIndex(entity => entity.ItemType);
         builder.HasIndex(entity => entity.Rarity);
         builder.HasIndex(entity => entity.EquipmentSlotId);
+        builder.HasIndex(entity => entity.OwnerCharacterId);
 
         // Инвентарь отбирает предметы по категории при каждом переключении раздела.
         builder.HasIndex(entity => entity.CategoryId);

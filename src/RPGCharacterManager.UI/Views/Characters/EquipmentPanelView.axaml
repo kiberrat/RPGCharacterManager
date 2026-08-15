@@ -4,143 +4,306 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:RPGCharacterManager.UI.ViewModels.Documents"
              xmlns:charactersVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Characters"
-             xmlns:contentVm="clr-namespace:RPGCharacterManager.UI.ViewModels.Content"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="760"
              x:Class="RPGCharacterManager.UI.Views.Characters.EquipmentPanelView"
              x:DataType="charactersVm:SheetPanelViewModel">
 
-  <!-- надетые предметы по слотам. -->
-  <Panel DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <StackPanel Spacing="10" Margin="0,10,0,0">
+  <Grid DataContext="{Binding Sheet}" x:DataType="vm:CharacterSheetViewModel" Margin="0,10,0,0">
 
-      <TextBlock Classes="Вторичный" TextWrapping="Wrap"
-                 Text="Бонусы надетых предметов применяются сразу: характеристики, максимумы ресурсов и производные значения пересчитываются при надевании и снятии." />
+    <!-- Центральная карта тела и кликабельные слоты. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="12">
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Выберите слот возле силуэта. Слева откроется его содержимое, справа — редактор новой экипировки и её бонусов." />
 
-      <TextBlock Classes="Вторичный" TextWrapping="Wrap"
-                 IsVisible="{Binding HasNoEquipmentSlots}"
-                 Text="Слоты экипировки не созданы. Создайте их в разделе «Контент» → «Слоты экипировки»: голова, руки, оба кольца, ячейка импланта — состав определяете вы. Затем у предмета выберите слот и опишите его бонусы." />
+        <TextBlock Classes="Вторичный" TextWrapping="Wrap" TextAlignment="Center"
+                   IsVisible="{Binding HasNoEquipmentSlots}"
+                   Text="Слоты экипировки не созданы. Сначала добавьте их в разделе «Контент» → «Слоты экипировки»." />
 
-      <ItemsControl ItemsSource="{Binding EquipmentSlots}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="charactersVm:EquipmentSlotViewModel">
-            <Border Classes="Карточка" Margin="0,0,0,10">
-              <StackPanel Spacing="8">
-
-                <Grid ColumnDefinitions="*,Auto">
-                  <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,10,0">
-                    <TextBlock Text="{Binding Name}" Classes="Подзаголовок" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Hint}" Classes="Вторичный" TextWrapping="Wrap" />
+        <Grid ColumnDefinitions="*,280,*" MaxWidth="850" HorizontalAlignment="Center">
+          <ItemsControl Grid.Column="0" ItemsSource="{Binding LeftEquipmentSlots}"
+                        VerticalAlignment="Center" Margin="0,0,12,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:EquipmentSlotViewModel">
+                <Button HorizontalAlignment="Right" MinWidth="160" Margin="0,6"
+                        Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.SelectEquipmentSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextAlignment="Right" />
+                    <TextBlock Text="{Binding Hint}" Classes="Вторичный" TextAlignment="Right"
+                               TextWrapping="Wrap" MaxWidth="190" />
                   </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
 
-                  <Button Grid.Column="1"
-                          Content="Надеть"
-                          VerticalAlignment="Top"
-                          IsEnabled="{Binding HasFreeSpace}"
-                          Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.SelectEquipmentSlotCommand}"
-                          CommandParameter="{Binding}" />
-                </Grid>
+          <Border Grid.Column="1" Padding="12" MinHeight="560"
+                  Background="{DynamicResource AppWindowBrush}">
+            <Canvas Width="260" Height="530" HorizontalAlignment="Center">
+              <!-- Фон и заливка используют ту же кисть, что и главное окно приложения. -->
+              <Path Fill="{DynamicResource AppWindowBrush}" Stroke="#E24B4B" StrokeThickness="2"
+                    Data="M 115,64
+                          L 115,77
+                          C 110,82 100,84 92,87
+                          C 79,91 75,101 72,115
+                          L 62,166
+                          C 59,181 59,196 60,211
+                          L 58,260
+                          C 55,273 57,285 62,291
+                          C 66,294 69,291 69,285
+                          L 67,274
+                          C 72,271 74,265 71,258
+                          L 78,209
+                          L 87,158
+                          L 93,120
+                          C 95,112 99,105 104,101
+                          C 99,123 96,137 96,154
+                          C 96,181 100,205 103,224
+                          C 105,239 104,253 101,274
+                          L 98,355
+                          L 91,461
+                          L 80,493
+                          C 78,500 84,504 93,504
+                          L 109,504
+                          C 114,504 115,499 112,495
+                          L 112,466
+                          L 122,359
+                          L 126,277
+                          L 130,277
+                          L 134,359
+                          L 144,466
+                          L 144,495
+                          C 141,499 142,504 147,504
+                          L 163,504
+                          C 172,504 178,500 176,493
+                          L 169,461
+                          L 162,355
+                          L 159,274
+                          C 156,253 155,239 157,224
+                          C 160,205 164,181 164,154
+                          C 164,137 161,123 156,101
+                          C 161,105 165,112 167,120
+                          L 173,158
+                          L 182,209
+                          L 189,258
+                          C 186,265 188,271 193,274
+                          L 191,285
+                          C 191,291 194,294 198,291
+                          C 203,285 205,273 202,260
+                          L 200,211
+                          C 201,196 201,181 198,166
+                          L 188,115
+                          C 185,101 181,91 168,87
+                          C 160,84 150,82 145,77
+                          L 145,64 Z" />
 
-                <TextBlock Classes="Вторичный"
-                           IsVisible="{Binding IsEmpty}"
-                           Text="Слот пуст." />
+              <Ellipse Canvas.Left="111" Canvas.Top="14" Width="38" Height="55"
+                       Fill="{DynamicResource AppWindowBrush}" Stroke="#E24B4B" StrokeThickness="2" />
 
-                <ItemsControl ItemsSource="{Binding Items}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="charactersVm:EquippedItemViewModel">
-                      <Grid ColumnDefinitions="*,Auto" Margin="0,4">
-                        <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,10,0">
-                          <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
-                            <TextBlock Text="{Binding ItemType}"
-                                       Classes="Вторичный"
-                                       IsVisible="{Binding HasItemType}" />
-                          </StackPanel>
+              <Path Data="M 88,126 C 94,142 106,148 121,148
+                          M 139,148 C 154,148 166,142 172,126"
+                    Stroke="#E24B4B" StrokeThickness="2" StrokeLineCap="Round" />
+            </Canvas>
+          </Border>
+          <ItemsControl Grid.Column="2" ItemsSource="{Binding RightEquipmentSlots}"
+                        VerticalAlignment="Center" Margin="12,0,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="charactersVm:EquipmentSlotViewModel">
+                <Button HorizontalAlignment="Left" MinWidth="160" Margin="0,6"
+                        Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.SelectEquipmentSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Hint}" Classes="Вторичный" TextWrapping="Wrap" MaxWidth="190" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </StackPanel>
+    </ScrollViewer>
 
-                          <TextBlock Text="{Binding Description}"
-                                     Classes="Вторичный"
-                                     TextWrapping="Wrap"
-                                     IsVisible="{Binding HasDescription}" />
+    <!-- Левая панель выбранного слота. -->
+    <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="390"
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,1,1"
+            CornerRadius="0,14,14,0"
+            IsVisible="{Binding SelectedEquipmentSlot, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <Grid ColumnDefinitions="*,42">
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="12" Margin="20">
+            <StackPanel Spacing="3">
+              <TextBlock Text="{Binding SelectedEquipmentSlot.Name}" Classes="Заголовок" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding SelectedEquipmentSlot.Hint}" Classes="Вторичный" TextWrapping="Wrap" />
+            </StackPanel>
 
-                          <TextBlock Classes="Вторичный"
-                                     IsVisible="{Binding !HasBonuses}"
-                                     Text="Бонусов нет." />
+            <TextBlock Text="Слот пуст." Classes="Вторичный"
+                       IsVisible="{Binding SelectedEquipmentSlot.IsEmpty}" />
 
-                          <ItemsControl ItemsSource="{Binding Bonuses}">
-                            <ItemsControl.ItemTemplate>
-                              <DataTemplate x:DataType="charactersVm:EquipmentBonusViewModel">
-                                <StackPanel Spacing="1" Margin="0,2">
-                                  <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
-                                  <TextBlock Text="{Binding Hint}"
-                                             Classes="Вторичный"
-                                             TextWrapping="Wrap"
-                                             IsVisible="{Binding HasHint}" />
-                                </StackPanel>
-                              </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                          </ItemsControl>
-
-                          <TextBlock Text="{Binding UnavailableReason}"
-                                     IsVisible="{Binding HasUnavailableReason}"
-                                     Foreground="{DynamicResource AppWarningBrush}"
-                                     TextWrapping="Wrap"
-                                     FontSize="{DynamicResource AppFontSizeSmall}" />
-                        </StackPanel>
-
-                        <Button Grid.Column="1"
-                                Content="Снять"
-                                VerticalAlignment="Top"
+            <ItemsControl ItemsSource="{Binding SelectedEquipmentSlot.Items}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="charactersVm:EquippedItemViewModel">
+                  <Border Classes="ВложеннаяКарточка" Margin="0,0,0,8">
+                    <StackPanel Spacing="6">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding Name}" Classes="Подзаголовок" TextWrapping="Wrap" />
+                        <Button Grid.Column="1" Content="Снять" Padding="8,4"
                                 Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.UnequipCommand}"
                                 CommandParameter="{Binding}" />
                       </Grid>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                      <TextBlock Text="{Binding Description}" Classes="Вторичный" TextWrapping="Wrap"
+                                 IsVisible="{Binding HasDescription}" />
+                      <TextBlock Text="Бонусов нет." Classes="Вторичный" IsVisible="{Binding !HasBonuses}" />
+                      <ItemsControl ItemsSource="{Binding Bonuses}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="charactersVm:EquipmentBonusViewModel">
+                            <StackPanel Spacing="1" Margin="0,2">
+                              <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                              <TextBlock Text="{Binding Hint}" Classes="Вторичный" TextWrapping="Wrap"
+                                         IsVisible="{Binding HasHint}" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
+            <Border Classes="Разделитель" />
+            <TextBlock Text="Надеть существующий предмет" Classes="Подзаголовок" />
+            <ListBox ItemsSource="{Binding AvailableEquipment}"
+                     SelectedItem="{Binding SelectedAvailableEquipment}"
+                     MaxHeight="190" Background="Transparent" BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="charactersVm:CharacterOptionViewModel">
+                  <StackPanel Spacing="2" Margin="2">
+                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding DetailsText}" Classes="Вторичный" TextWrapping="Wrap"
+                               IsVisible="{Binding HasDetails}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <WrapPanel Orientation="Horizontal">
+              <Button Content="Надеть выбранное" Command="{Binding EquipCommand}"
+                      Margin="0,0,6,6" />
+              <Button Content="Создать экипировку" Command="{Binding OpenLocalEquipmentEditorCommand}"
+                      IsEnabled="{Binding SelectedEquipmentSlot.HasFreeSpace}"
+                      Classes="Основная" Margin="0,0,6,6" />
+            </WrapPanel>
+          </StackPanel>
+        </ScrollViewer>
+        <Button Grid.Column="1" Content="‹" FontSize="24" Padding="0"
+                Command="{Binding CloseEquipmentPanelsCommand}" />
+      </Grid>
+    </Border>
+
+    <!-- Правая панель создания предмета. -->
+    <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="480"
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1,1,0,1"
+            CornerRadius="14,0,0,14"
+            IsVisible="{Binding IsLocalEquipmentEditorOpen}">
+      <Grid ColumnDefinitions="42,*">
+        <Button Grid.Column="0" Content="›" FontSize="24" Padding="0"
+                Command="{Binding CloseLocalEquipmentEditorCommand}" />
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="12" Margin="20">
+            <StackPanel Spacing="3">
+              <TextBlock Text="Создать экипировку" Classes="Заголовок" />
+              <TextBlock Text="{Binding SelectedEquipmentSlot.Name, StringFormat='Слот: {0}'}"
+                         Classes="Вторичный" />
+            </StackPanel>
+
+            <TextBox Text="{Binding LocalEquipmentName}" Watermark="Название" />
+            <TextBox Text="{Binding LocalEquipmentDescription}" Watermark="Описание"
+                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" />
+            <Grid ColumnDefinitions="*,*">
+              <TextBox Grid.Column="0" Text="{Binding LocalEquipmentItemType}"
+                       Watermark="Тип" Margin="0,0,8,0" />
+              <TextBox Grid.Column="1" Text="{Binding LocalEquipmentRarity}" Watermark="Редкость" />
+            </Grid>
+
+            <WrapPanel Orientation="Horizontal">
+              <StackPanel Width="105" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Вес" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalEquipmentWeight}" Minimum="0" Maximum="999999"
+                               Increment="0.1" FormatString="0.##" />
               </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+              <StackPanel Width="105" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Цена" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalEquipmentPrice}" Minimum="0" Maximum="999999999"
+                               Increment="1" FormatString="0.##" />
+              </StackPanel>
+              <StackPanel Width="125" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Валюта" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalEquipmentCurrency}" Watermark="зм" />
+              </StackPanel>
+            </WrapPanel>
 
-      <Border Classes="Карточка" IsVisible="{Binding SelectedEquipmentSlot, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <StackPanel Spacing="8">
-          <TextBlock Text="{Binding SelectedEquipmentSlot.Name}" Classes="Подзаголовок" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="Что даёт предмет" Classes="Подзаголовок" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="+ Бонус" Command="{Binding AddLocalEquipmentBonusCommand}" />
+            </Grid>
 
-          <TextBlock Classes="Вторичный" TextWrapping="Wrap"
-                     Text="Показаны предметы, у которых выбран этот слот." />
+            <ItemsControl ItemsSource="{Binding LocalEquipmentBonuses}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="charactersVm:LocalEquipmentBonusViewModel">
+                  <Border Classes="ВложеннаяКарточка" Margin="0,0,0,8">
+                    <StackPanel Spacing="8">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <ComboBox ItemsSource="{Binding TargetOptions}" SelectedItem="{Binding SelectedTarget}">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="charactersVm:LocalBonusTargetOption">
+                              <TextBlock Text="{Binding Name}" />
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="1" Content="✕" Classes="Тихая" Margin="6,0,0,0"
+                                Command="{Binding $parent[UserControl].((charactersVm:SheetPanelViewModel)DataContext).Sheet.RemoveLocalEquipmentBonusCommand}"
+                                CommandParameter="{Binding}" />
+                      </Grid>
 
-          <ListBox ItemsSource="{Binding AvailableEquipment}"
-                   SelectedItem="{Binding SelectedAvailableEquipment}"
-                   MaxHeight="220"
-                   Background="Transparent"
-                   BorderThickness="0">
-            <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="charactersVm:CharacterOptionViewModel">
-                <StackPanel Spacing="2" Margin="2">
-                  <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
-                  <TextBlock Text="{Binding DetailsText}"
-                             Classes="Вторичный"
-                             TextWrapping="Wrap"
-                             IsVisible="{Binding HasDetails}" />
-                  <TextBlock Text="{Binding UnavailableReason}"
-                             IsVisible="{Binding HasUnavailableReason}"
-                             Foreground="{DynamicResource AppWarningBrush}"
-                             TextWrapping="Wrap"
-                             FontSize="{DynamicResource AppFontSizeSmall}" />
-                </StackPanel>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+                      <ComboBox ItemsSource="{Binding AttributeOptions}" SelectedItem="{Binding SelectedAttribute}"
+                                IsVisible="{Binding IsAttribute}">
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate x:DataType="charactersVm:LocalContentReferenceOption">
+                            <TextBlock Text="{Binding Name}" />
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
 
-          <Button Content="Надеть выбранное"
-                  Command="{Binding EquipCommand}"
-                  HorizontalAlignment="Left"
-                  Classes="Основная" />
-        </StackPanel>
-      </Border>
+                      <ComboBox ItemsSource="{Binding ResourceOptions}" SelectedItem="{Binding SelectedResource}"
+                                IsVisible="{Binding IsResource}">
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate x:DataType="charactersVm:LocalContentReferenceOption">
+                            <TextBlock Text="{Binding Name}" />
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
 
-    </StackPanel>
-  </ScrollViewer>
-  </Panel>
+                      <TextBox Text="{Binding Name}" IsVisible="{Binding IsNamed}"
+                               Watermark="Имя переменной или тега" />
+                      <TextBox Text="{Binding Formula}" IsVisible="{Binding IsFormulaVisible}"
+                               Watermark="Формула бонуса, например 2 или уровень / 2" />
+                      <TextBox Text="{Binding Condition}"
+                               Watermark="Условие, необязательно: уровень >= 5" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button Content="Создать и надеть" Command="{Binding CreateLocalEquipmentCommand}"
+                    Classes="Основная" HorizontalAlignment="Left" />
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+  </Grid>
 </UserControl>

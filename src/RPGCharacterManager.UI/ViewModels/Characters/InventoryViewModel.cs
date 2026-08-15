@@ -62,6 +62,39 @@ public sealed partial class InventoryViewModel : ViewModelBase
     [ObservableProperty]
     private string? _lastReport;
 
+    [ObservableProperty]
+    private bool _isLocalItemCreatorOpen;
+
+    [ObservableProperty]
+    private string _localItemName = string.Empty;
+
+    [ObservableProperty]
+    private string _localItemDescription = string.Empty;
+
+    [ObservableProperty]
+    private string _localItemType = "Авторский предмет";
+
+    [ObservableProperty]
+    private int _localItemCount = 1;
+
+    [ObservableProperty]
+    private double _localItemWeight;
+
+    [ObservableProperty]
+    private double _localItemPrice;
+
+    [ObservableProperty]
+    private string _localItemCurrency = string.Empty;
+
+    [ObservableProperty]
+    private bool _localItemIsWeapon;
+
+    [ObservableProperty]
+    private string _localItemDamageFormula = "1к6";
+
+    [ObservableProperty]
+    private string _localItemDamageType = string.Empty;
+
     /// <summary>
     /// Создаёт модель представления инвентаря.
     /// </summary>
@@ -173,10 +206,25 @@ public sealed partial class InventoryViewModel : ViewModelBase
 
         if (IsPickerOpen)
         {
+            IsLocalItemCreatorOpen = false;
             await ReloadAvailableItemsAsync(cancellationToken).ConfigureAwait(true);
         }
         else
         {
+            AvailableItems.Clear();
+            SelectedAvailableItem = null;
+        }
+    }
+
+    /// <summary>Показывает или скрывает создание локального предмета.</summary>
+    [RelayCommand]
+    private void ToggleLocalItemCreator()
+    {
+        IsLocalItemCreatorOpen = !IsLocalItemCreatorOpen;
+
+        if (IsLocalItemCreatorOpen)
+        {
+            IsPickerOpen = false;
             AvailableItems.Clear();
             SelectedAvailableItem = null;
         }
@@ -211,6 +259,49 @@ public sealed partial class InventoryViewModel : ViewModelBase
         await ReloadAsync(cancellationToken).ConfigureAwait(true);
     }
 
+    /// <summary>Создаёт локальный предмет и сразу кладёт его в инвентарь.</summary>
+    [RelayCommand]
+    private async Task CreateLocalItemAsync(CancellationToken cancellationToken)
+    {
+        var draft = new LocalInventoryItemDraft(
+            LocalItemName,
+            LocalItemDescription,
+            LocalItemType,
+            LocalItemWeight,
+            LocalItemPrice,
+            LocalItemCurrency,
+            LocalItemIsWeapon,
+            LocalItemDamageFormula,
+            LocalItemDamageType);
+
+        var count = Math.Max(1, LocalItemCount);
+        var result = await _inventory
+            .CreateLocalAsync(_characterId, draft, count, cancellationToken)
+            .ConfigureAwait(true);
+
+        if (!await ReportAsync(result).ConfigureAwait(true))
+        {
+            return;
+        }
+
+        var createdName = LocalItemName.Trim();
+        LastReport = $"Создан локальный предмет: {createdName} ×{count.ToString(CultureInfo.CurrentCulture)}.";
+        OnPropertyChanged(nameof(HasReport));
+
+        LocalItemName = string.Empty;
+        LocalItemDescription = string.Empty;
+        LocalItemType = "Авторский предмет";
+        LocalItemCount = 1;
+        LocalItemWeight = 0;
+        LocalItemPrice = 0;
+        LocalItemCurrency = string.Empty;
+        LocalItemIsWeapon = false;
+        LocalItemDamageFormula = "1к6";
+        LocalItemDamageType = string.Empty;
+        IsLocalItemCreatorOpen = false;
+
+        await ReloadAsync(cancellationToken).ConfigureAwait(true);
+    }
     /// <summary>
     /// Добавляет один предмет к выбранной записи.
     /// </summary>

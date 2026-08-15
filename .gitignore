@@ -24,6 +24,8 @@ publish-ready-previous-*/
 publish-staging-*/
 # Локальная установленная версия и временные рабочие файлы
 local-installed-preview/
+local-test-preview-*/
+local-test-data-*/
 tmp/
 
 # Локально установленные инструменты .NET

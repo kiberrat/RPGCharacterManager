@@ -88,7 +88,14 @@ public sealed record SheetResource(
     string Category,
     double Current,
     double Maximum,
-    string? RestoreRule);
+    string? RestoreRule)
+{
+    /// <summary>Максимум, полученный из формулы до авторского переопределения.</summary>
+    public double CalculatedMaximum { get; init; } = Maximum;
+
+    /// <summary>Максимум задан вручную для этого персонажа.</summary>
+    public bool IsMaximumOverridden { get; init; }
+}
 
 /// <summary>
 /// Черта, полученная персонажем.

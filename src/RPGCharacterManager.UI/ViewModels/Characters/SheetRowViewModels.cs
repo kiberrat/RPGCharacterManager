@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using RPGCharacterManager.Core.Abstractions.Characters;
 using RPGCharacterManager.Core.Models.Entities;
 using RPGCharacterManager.Shared.Guards;
@@ -299,53 +300,125 @@ public sealed partial class SheetSkillRowViewModel : ViewModelBase
 
 /// <summary>
 /// Строка ресурса на листе персонажа.
-/// Максимум вычисляется формулой, текущее значение задаёт игрок.
+/// Текущее значение и авторский максимум сохраняются у персонажа.
 /// </summary>
 public sealed partial class SheetResourceRowViewModel : ViewModelBase
 {
     private readonly CharacterResource _resource;
     private readonly Action _changed;
+    private readonly double _calculatedMaximum;
+    private bool _isUpdating;
 
     [ObservableProperty]
     private string _currentText = string.Empty;
 
-    /// <summary>
-    /// Создаёт строку ресурса.
-    /// </summary>
-    /// <param name="resource">Вычисленный ресурс.</param>
-    /// <param name="value">Запись состояния ресурса персонажа.</param>
-    /// <param name="changed">Обратный вызов при изменении значения.</param>
+    [ObservableProperty]
+    private string _maximumText = string.Empty;
+
+    [ObservableProperty]
+    private bool _isMaximumOverridden;
+
+    /// <summary>Создаёт редактируемую строку ресурса персонажа.</summary>
+    /// <param name="resource">Рассчитанное состояние ресурса.</param>
+    /// <param name="value">Хранимое у персонажа значение.</param>
+    /// <param name="changed">Действие при изменении значения.</param>
     public SheetResourceRowViewModel(SheetResource resource, CharacterResource value, Action changed)
     {
         Resource = Guard.NotNull(resource);
         _resource = Guard.NotNull(value);
         _changed = Guard.NotNull(changed);
-
+        _calculatedMaximum = Math.Max(0, resource.CalculatedMaximum);
         _currentText = SheetNumber.Format(resource.Current);
+        _maximumText = SheetNumber.Format(resource.Maximum);
+        _isMaximumOverridden = resource.IsMaximumOverridden;
     }
 
-    /// <summary>Вычисленный ресурс.</summary>
+    /// <summary>Рассчитанное состояние ресурса.</summary>
     public SheetResource Resource { get; }
 
-    /// <summary>Название ресурса.</summary>
+    /// <summary>Отображаемое название ресурса.</summary>
     public string Name => Resource.Name;
 
-    /// <summary>Максимальное значение.</summary>
-    public string Maximum => SheetNumber.Format(Resource.Maximum);
+    /// <summary>Максимум, рассчитанный игровыми правилами, без авторской замены.</summary>
+    public string CalculatedMaximumText => SheetNumber.Format(_calculatedMaximum);
 
     /// <summary>Правило восстановления ресурса.</summary>
     public string? RestoreRule => Resource.RestoreRule;
 
-    /// <summary>Правило восстановления задано.</summary>
+    /// <summary>Указывает, что правило восстановления задано.</summary>
     public bool HasRestoreRule => !string.IsNullOrWhiteSpace(Resource.RestoreRule);
 
     partial void OnCurrentTextChanged(string value)
     {
-        if (SheetNumber.Parse(value) is { } current)
+        if (_isUpdating || SheetNumber.Parse(value) is not { } parsed || parsed < 0)
         {
-            _resource.Current = Math.Clamp(current, 0, Resource.Maximum);
-            _changed();
+            return;
         }
+
+        var maximum = Math.Max(0, _resource.MaximumOverride ?? Resource.Maximum);
+
+        if (parsed > maximum)
+        {
+            maximum = parsed;
+            _resource.MaximumOverride = maximum;
+            _resource.Maximum = maximum;
+            IsMaximumOverridden = true;
+            SetMaximumText(maximum);
+        }
+
+        _resource.Current = Math.Clamp(parsed, 0, maximum);
+        _changed();
+    }
+
+    partial void OnMaximumTextChanged(string value)
+    {
+        if (_isUpdating || SheetNumber.Parse(value) is not { } maximum || maximum < 0)
+        {
+            return;
+        }
+
+        _resource.MaximumOverride = maximum;
+        _resource.Maximum = maximum;
+        IsMaximumOverridden = true;
+
+        if (_resource.Current > maximum)
+        {
+            _resource.Current = maximum;
+            SetCurrentText(maximum);
+        }
+
+        _changed();
+    }
+
+    [RelayCommand]
+    private void ResetMaximum()
+    {
+        _resource.MaximumOverride = null;
+        _resource.Maximum = _calculatedMaximum;
+        IsMaximumOverridden = false;
+
+        if (_resource.Current > _calculatedMaximum)
+        {
+            _resource.Current = _calculatedMaximum;
+            SetCurrentText(_calculatedMaximum);
+        }
+
+        SetMaximumText(_calculatedMaximum);
+        _changed();
+    }
+
+    private void SetCurrentText(double value)
+    {
+        _isUpdating = true;
+        CurrentText = SheetNumber.Format(value);
+        _isUpdating = false;
+    }
+
+    private void SetMaximumText(double value)
+    {
+        _isUpdating = true;
+        MaximumText = SheetNumber.Format(value);
+        _isUpdating = false;
     }
 }
 

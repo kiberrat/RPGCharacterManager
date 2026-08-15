@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using RPGCharacterManager.Core.Abstractions.Items;
 using RPGCharacterManager.Core.Models.Characters;
 using RPGCharacterManager.Core.Models.Entities;
 using RPGCharacterManager.Tests.Characters;
@@ -329,6 +331,62 @@ public sealed class EquipmentServiceTests
         Assert.Equal(12, await AttributeValueAsync(context, characterId));
     }
 
+    [Fact]
+    public async Task АвторскаяЭкипировка_СоздаётсяНадеваетсяИСразуПрименяетБонусы()
+    {
+        await using var context = await CharacterTestContext.CreateAsync();
+
+        var strength = CharacterContent.Attribute("Сила", "сила", defaultValue: 10);
+        var health = CharacterContent.Resource("Хиты", "хиты", "20");
+        var slot = CharacterContent.Slot("Голова", "голова");
+        await context.AddAsync(strength);
+        await context.AddAsync(health);
+        await context.AddAsync(slot);
+
+        var ownerId = await CreateCharacterAsync(context, "Владелец шлема");
+        var otherId = await CreateCharacterAsync(context, "Другой герой");
+        var draft = new LocalEquipmentDraft(
+            "Шлем исполина",
+            "Сделан специально для героя.",
+            "Шлем",
+            "Редкий",
+            2,
+            350,
+            "зм",
+            [
+                new LocalEquipmentBonusDraft(
+                    BonusTargetKind.Attribute, strength.Id, null, null, "2", null),
+                new LocalEquipmentBonusDraft(
+                    BonusTargetKind.Resource, null, health.Id, null, "5", null),
+            ]);
+
+        var created = await context.Equipment.CreateLocalAndEquipAsync(ownerId, slot.Id, draft);
+        Assert.True(created.IsSuccess, created.Error);
+
+        var sheet = await context.Sheets.LoadAsync(ownerId);
+        Assert.True(sheet.IsSuccess, sheet.Error);
+        Assert.Equal(12, Assert.Single(sheet.Value.Attributes).Value);
+        Assert.Equal(25, Assert.Single(sheet.Value.Resources).Maximum);
+
+        var slots = await context.Equipment.GetSlotsAsync(ownerId);
+        Assert.True(slots.IsSuccess, slots.Error);
+        var item = Assert.Single(Assert.Single(slots.Value).Items);
+        Assert.Equal(created.Value, item.InventoryItemId);
+        Assert.Equal("Шлем исполина", item.Name);
+        Assert.Equal(2, item.Bonuses.Count);
+        Assert.All(item.Bonuses, bonus => Assert.True(bonus.IsApplied));
+
+        var otherOptions = await context.Equipment.GetAvailableItemsAsync(otherId, slot.Id, null, true);
+        Assert.DoesNotContain(otherOptions.Options, option => option.Id == item.ItemId);
+        Assert.True((await context.Equipment.EquipAsync(otherId, item.ItemId)).IsFailure);
+
+        await using var database = await context.CreateContextAsync();
+        var stored = await database.Items
+            .Include(entry => entry.Bonuses)
+            .SingleAsync(entry => entry.Id == item.ItemId);
+        Assert.Equal(ownerId, stored.OwnerCharacterId);
+        Assert.Equal(2, stored.Bonuses.Count);
+    }
     // ---------- Слоты ----------
 
     [Fact]

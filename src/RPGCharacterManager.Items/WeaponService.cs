@@ -125,7 +125,8 @@ public sealed class WeaponService : IWeaponService
             .AsNoTracking()
             .Include(item => item.Weapon)
             .Where(item => item.Weapon != null)
-            .Where(item => item.GameSystemId == null || item.GameSystemId == systemId);
+            .Where(item => item.GameSystemId == null || item.GameSystemId == systemId)
+            .Where(item => item.OwnerCharacterId == null || item.OwnerCharacterId == characterId);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -192,7 +193,10 @@ public sealed class WeaponService : IWeaponService
 
             var item = await context.Items
                 .Include(entity => entity.Weapon)
-                .FirstOrDefaultAsync(entity => entity.Id == itemId, cancellationToken)
+                .FirstOrDefaultAsync(
+                    entity => entity.Id == itemId
+                        && (entity.OwnerCharacterId == null || entity.OwnerCharacterId == characterId),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             if (item?.Weapon is not { } weapon)
@@ -226,6 +230,122 @@ public sealed class WeaponService : IWeaponService
         }
     }
 
+    /// <inheritdoc />
+    public async Task<Result<Guid>> CreateLocalAsync(
+        Guid characterId,
+        LocalWeaponDraft draft,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotNull(draft);
+
+        if (string.IsNullOrWhiteSpace(draft.Name))
+        {
+            return Result.Failure<Guid>("Введите название оружия.");
+        }
+
+        if (!double.IsFinite(draft.Weight) || draft.Weight < 0 ||
+            !double.IsFinite(draft.Price) || draft.Price < 0)
+        {
+            return Result.Failure<Guid>("Вес и стоимость оружия должны быть числами не меньше нуля.");
+        }
+
+        if (draft.CriticalThreshold is <= 0)
+        {
+            return Result.Failure<Guid>("Порог критического попадания должен быть больше нуля.");
+        }
+
+        try
+        {
+            await using var context = await _contextFactory
+                .CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+            var character = await context.Characters
+                .AsNoTracking()
+                .FirstOrDefaultAsync(entity => entity.Id == characterId, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (character is null)
+            {
+                return Result.Failure<Guid>("Персонаж не найден: возможно, он был удалён.");
+            }
+
+            if (draft.ScalingAttributeId is { } attributeId &&
+                !await context.Attributes.AnyAsync(
+                    attribute => attribute.Id == attributeId &&
+                        (attribute.GameSystemId == null || attribute.GameSystemId == character.GameSystemId),
+                    cancellationToken).ConfigureAwait(false))
+            {
+                return Result.Failure<Guid>("Выбранная характеристика оружия не найдена.");
+            }
+
+            if (draft.ProficiencySkillId is { } skillId &&
+                !await context.Skills.AnyAsync(
+                    skill => skill.Id == skillId &&
+                        (skill.GameSystemId == null || skill.GameSystemId == character.GameSystemId),
+                    cancellationToken).ConfigureAwait(false))
+            {
+                return Result.Failure<Guid>("Выбранный навык владения не найден.");
+            }
+
+            var item = new Item
+            {
+                OwnerCharacterId = characterId,
+                GameSystemId = character.GameSystemId,
+                Name = draft.Name.Trim(),
+                SystemName = $"local_weapon_{characterId:N}_{Guid.NewGuid():N}",
+                Source = "Авторское оружие персонажа",
+                Description = string.IsNullOrWhiteSpace(draft.Description) ? null : draft.Description.Trim(),
+                ItemType = string.IsNullOrWhiteSpace(draft.ItemType) ? "Авторское оружие" : draft.ItemType.Trim(),
+                Weight = draft.Weight,
+                Price = draft.Price,
+                Currency = string.IsNullOrWhiteSpace(draft.Currency) ? null : draft.Currency.Trim(),
+                Stackable = false,
+                Weapon = new Weapon
+                {
+                    Category = string.IsNullOrWhiteSpace(draft.Category) ? null : draft.Category.Trim(),
+                    Range = string.IsNullOrWhiteSpace(draft.Range) ? null : draft.Range.Trim(),
+                    DamageType = string.IsNullOrWhiteSpace(draft.DamageType) ? null : draft.DamageType.Trim(),
+                    Properties = string.IsNullOrWhiteSpace(draft.Properties) ? null : draft.Properties.Trim(),
+                    AttackDiceFormula = string.IsNullOrWhiteSpace(draft.AttackDiceFormula)
+                        ? "1к20"
+                        : draft.AttackDiceFormula.Trim(),
+                    AttackFormula = string.IsNullOrWhiteSpace(draft.AttackFormula)
+                        ? null
+                        : draft.AttackFormula.Trim(),
+                    DamageFormula = string.IsNullOrWhiteSpace(draft.DamageFormula)
+                        ? "1к6"
+                        : draft.DamageFormula.Trim(),
+                    CriticalFormula = string.IsNullOrWhiteSpace(draft.CriticalFormula)
+                        ? null
+                        : draft.CriticalFormula.Trim(),
+                    CriticalThreshold = draft.CriticalThreshold,
+                    ScalingAttributeId = draft.ScalingAttributeId,
+                    ProficiencySkillId = draft.ProficiencySkillId,
+                },
+            };
+
+            var inventory = new InventoryItem
+            {
+                CharacterId = characterId,
+                ItemId = item.Id,
+                Item = item,
+                Count = 1,
+            };
+
+            context.Add(item);
+            context.Add(inventory);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            ItemsLog.WeaponAdded(_logger, item.Name, character.Name);
+
+            return Result.Success(inventory.Id);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            ItemsLog.WeaponOperationFailed(_logger, exception, characterId);
+            return Result.Failure<Guid>($"Не удалось создать оружие: {exception.Message}");
+        }
+    }
     /// <inheritdoc />
     public async Task<Result> RemoveAsync(
         Guid characterId,

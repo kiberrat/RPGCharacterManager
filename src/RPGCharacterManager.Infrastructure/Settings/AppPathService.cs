@@ -16,9 +16,7 @@ public sealed class AppPathService : IAppPathService
     /// </summary>
     public AppPathService()
     {
-        DataDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            ApplicationConstants.DataFolderName);
+        DataDirectory = ResolveDataDirectory();
 
         LogsDirectory = Path.Combine(DataDirectory, ApplicationConstants.LogsFolderName);
         BackupsDirectory = Path.Combine(DataDirectory, ApplicationConstants.BackupsFolderName);
@@ -45,6 +43,33 @@ public sealed class AppPathService : IAppPathService
     /// <inheritdoc />
     public string SettingsFilePath { get; }
 
+    private static string ResolveDataDirectory()
+    {
+        var arguments = Environment.GetCommandLineArgs();
+
+        for (var index = 1; index < arguments.Length; index++)
+        {
+            var argument = arguments[index];
+
+            if (string.Equals(argument, "--data-directory", StringComparison.OrdinalIgnoreCase) &&
+                index + 1 < arguments.Length &&
+                !string.IsNullOrWhiteSpace(arguments[index + 1]))
+            {
+                return Path.GetFullPath(arguments[index + 1]);
+            }
+
+            const string Prefix = "--data-directory=";
+            if (argument.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(argument[Prefix.Length..]))
+            {
+                return Path.GetFullPath(argument[Prefix.Length..]);
+            }
+        }
+
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            ApplicationConstants.DataFolderName);
+    }
     /// <inheritdoc />
     public void EnsureDirectoriesExist()
     {

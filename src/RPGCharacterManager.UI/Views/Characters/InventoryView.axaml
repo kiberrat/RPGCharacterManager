@@ -98,11 +98,17 @@
             <ToggleButton Content="Обратный порядок" IsChecked="{Binding IsDescending}" />
           </StackPanel>
 
-          <StackPanel Orientation="Horizontal" Spacing="6">
+          <WrapPanel Orientation="Horizontal">
             <Button Content="Получить предмет"
                     Command="{Binding TogglePickerCommand}"
-                    Classes="Основная" />
+                    Classes="Основная"
+                    Margin="0,0,6,6" />
+            <Button Content="Создать свой"
+                    Command="{Binding ToggleLocalItemCreatorCommand}"
+                    Margin="0,0,6,6"
+                    ToolTip.Tip="Создать предмет только для этого персонажа" />
             <Button Content="Использовать"
+                    Margin="0,0,6,6"
                     Command="{Binding UseCommand}"
                     IsEnabled="{Binding SelectedEntry.CanUse, FallbackValue=False}" />
             <Button Content="Заряды"
@@ -112,10 +118,76 @@
             <Button Content="Убрать"
                     Command="{Binding RemoveCommand}"
                     IsEnabled="{Binding HasSelection}"
-                    Classes="Опасная" />
-          </StackPanel>
+                    Classes="Опасная"
+                    Margin="0,0,6,6" />
+          </WrapPanel>
         </StackPanel>
 
+        <!-- Авторский предмет существует только у открытого персонажа. -->
+        <Border DockPanel.Dock="Top"
+                Classes="Карточка"
+                Margin="0,0,0,8"
+                IsVisible="{Binding IsLocalItemCreatorOpen}">
+          <StackPanel Spacing="10">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Создать предмет персонажа" Classes="Подзаголовок" />
+              <TextBlock Text="Предмет сразу появится в инвентаре и не попадёт в общий каталог других персонажей."
+                         Classes="Вторичный" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid ColumnDefinitions="2*,*" RowDefinitions="Auto,Auto">
+              <TextBox Grid.Row="0" Grid.Column="0" Margin="0,0,8,8"
+                       Text="{Binding LocalItemName}" Watermark="Название предмета" />
+              <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8"
+                       Text="{Binding LocalItemType}" Watermark="Тип: оружие, зелье…" />
+              <TextBox Grid.Row="1" Grid.ColumnSpan="2"
+                       Text="{Binding LocalItemDescription}"
+                       Watermark="Описание, свойства и заметки"
+                       AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" />
+            </Grid>
+
+            <WrapPanel Orientation="Horizontal">
+              <StackPanel Width="120" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Количество" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalItemCount}" Minimum="1" Maximum="10000"
+                               Increment="1" FormatString="0" />
+              </StackPanel>
+              <StackPanel Width="120" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Вес одного" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalItemWeight}" Minimum="0" Maximum="999999"
+                               Increment="0.1" FormatString="0.##" />
+              </StackPanel>
+              <StackPanel Width="120" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Цена одного" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalItemPrice}" Minimum="0" Maximum="999999999"
+                               Increment="1" FormatString="0.##" />
+              </StackPanel>
+              <StackPanel Width="150" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Валюта" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalItemCurrency}" Watermark="зм, серебро…" />
+              </StackPanel>
+            </WrapPanel>
+
+            <CheckBox Content="Это оружие" IsChecked="{Binding LocalItemIsWeapon}" />
+
+            <Grid ColumnDefinitions="*,*"
+                  IsVisible="{Binding LocalItemIsWeapon}">
+              <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,8,0">
+                <TextBlock Text="Урон" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalItemDamageFormula}" Watermark="Например, 1к8+2" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="4">
+                <TextBlock Text="Тип урона" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalItemDamageType}" Watermark="Рубящий, огненный…" />
+              </StackPanel>
+            </Grid>
+
+            <Button Content="Создать и добавить"
+                    Command="{Binding CreateLocalItemCommand}"
+                    Classes="Основная"
+                    HorizontalAlignment="Left" />
+          </StackPanel>
+        </Border>
         <!-- Выдача предмета. Раскрывается кнопкой и не занимает место постоянно. -->
         <Border DockPanel.Dock="Top"
                 Classes="Карточка"

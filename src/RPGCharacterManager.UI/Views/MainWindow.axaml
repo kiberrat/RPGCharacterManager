@@ -92,7 +92,7 @@
         <DockPanel Grid.Column="1" Margin="0">
 
           <!-- Полоса открытых документов вместе с кнопками панелей. -->
-          <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="14,14,20,8">
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto" Margin="14,14,20,8">
 
             <Button Grid.Column="0"
                     Classes="Тихая"
@@ -157,12 +157,25 @@
               </ListBox.ItemTemplate>
             </ListBox>
 
+            <!-- Новая вкладка начинается с обзорной страницы, как домашняя вкладка браузера. -->
+            <Button Grid.Column="2"
+                    Content="+"
+                    Classes="Тихая"
+                    FontSize="22"
+                    FontWeight="SemiBold"
+                    Width="32" Height="32"
+                    Padding="0"
+                    MinHeight="0"
+                    Margin="8,1,0,0"
+                    VerticalAlignment="Top"
+                    ToolTip.Tip="Открыть новую вкладку"
+                    Command="{Binding NewTabCommand}" />
             <!--
               Кубики нужны в любом разделе, поэтому у панели бросков собственная
               кнопка рядом с вкладками, а не строка в панели разделов: бросок не
               открывает документ и не закрывает лист персонажа.
             -->
-            <Button Grid.Column="2"
+            <Button Grid.Column="3"
                     Classes="Тихая"
                     Width="32" Height="32"
                     Padding="0"

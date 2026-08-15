@@ -14,11 +14,13 @@
   <DockPanel Margin="0,10,0,0">
 
     <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
-      <StackPanel Orientation="Horizontal" Spacing="6">
-        <Button Content="Выдать оружие" Command="{Binding ToggleWeaponPickerCommand}" />
-        <TextBlock Classes="Вторичный" VerticalAlignment="Center"
-                   Text="Атака, перезарядка и запас боеприпасов сохраняются сразу, кнопка «Сохранить» для них не нужна." />
-      </StackPanel>
+      <WrapPanel Orientation="Horizontal">
+        <Button Content="Выдать оружие" Command="{Binding ToggleWeaponPickerCommand}" Margin="0,0,6,6" />
+        <Button Content="Создать оружие" Command="{Binding ToggleLocalWeaponEditorCommand}"
+                Classes="Основная" Margin="0,0,6,6" />
+      </WrapPanel>
+      <TextBlock Classes="Вторичный" TextWrapping="Wrap"
+                 Text="Оружие можно выбрать из общего каталога или создать только для этого персонажа. Формулы сразу участвуют в атаке и расчёте урона." />
 
       <Border Classes="Карточка" IsVisible="{Binding IsWeaponPickerOpen}">
         <StackPanel Spacing="8">
@@ -50,6 +52,113 @@
                   HorizontalAlignment="Left" />
         </StackPanel>
       </Border>
+
+      <Border Classes="Карточка" IsVisible="{Binding IsLocalWeaponEditorOpen}">
+        <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="10">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Создать оружие персонажа" Classes="Подзаголовок" />
+              <TextBlock Text="Оружие сохранится только у этого персонажа и сразу появится ниже."
+                         Classes="Вторичный" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid ColumnDefinitions="2*,*" RowDefinitions="Auto,Auto">
+              <TextBox Grid.Row="0" Grid.Column="0" Margin="0,0,8,8"
+                       Text="{Binding LocalWeaponName}" Watermark="Название" />
+              <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8"
+                       Text="{Binding LocalWeaponItemType}" Watermark="Тип предмета" />
+              <TextBox Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding LocalWeaponDescription}"
+                       Watermark="Описание оружия" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
+              <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Категория" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponCategory}" Watermark="Ближнее, дальнее…" />
+              </StackPanel>
+              <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Дальность" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponRange}" Watermark="1,5 м / 18 м…" />
+              </StackPanel>
+              <StackPanel Grid.Row="0" Grid.Column="2" Spacing="4" Margin="0,0,0,8">
+                <TextBlock Text="Тип урона" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponDamageType}" Watermark="Рубящий…" />
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Spacing="4">
+                <TextBlock Text="Свойства" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponProperties}" Watermark="Лёгкое, двуручное, магическое…" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto">
+              <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Кость попадания" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponAttackDiceFormula}" Watermark="1к20" />
+              </StackPanel>
+              <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4" Margin="0,0,0,8">
+                <TextBlock Text="Бонус попадания" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponAttackFormula}" Watermark="характеристика + бонус_мастерства" />
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Урон" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponDamageFormula}" Watermark="1к8 + характеристика" />
+              </StackPanel>
+              <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4" Margin="0,0,0,8">
+                <TextBlock Text="Критический урон" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponCriticalFormula}" Watermark="урон + 1к8" />
+              </StackPanel>
+              <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4" Margin="0,0,8,0">
+                <TextBlock Text="Порог крита" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalWeaponCriticalThreshold}" Minimum="1" Maximum="1000"
+                               Increment="1" FormatString="0" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*">
+              <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,8,0">
+                <TextBlock Text="Характеристика" Classes="Вторичный" />
+                <ComboBox ItemsSource="{Binding LocalAttributeOptions}"
+                          SelectedItem="{Binding LocalWeaponScalingAttribute}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="charactersVm:LocalContentReferenceOption">
+                      <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="4">
+                <TextBlock Text="Навык владения" Classes="Вторичный" />
+                <ComboBox ItemsSource="{Binding LocalSkillOptions}"
+                          SelectedItem="{Binding LocalWeaponProficiencySkill}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="charactersVm:LocalContentReferenceOption">
+                      <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+
+            <WrapPanel Orientation="Horizontal">
+              <StackPanel Width="120" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Вес" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalWeaponWeight}" Minimum="0" Maximum="999999" Increment="0.1" FormatString="0.##" />
+              </StackPanel>
+              <StackPanel Width="120" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Цена" Classes="Вторичный" />
+                <NumericUpDown Value="{Binding LocalWeaponPrice}" Minimum="0" Maximum="999999999" Increment="1" FormatString="0.##" />
+              </StackPanel>
+              <StackPanel Width="150" Spacing="4" Margin="0,0,8,8">
+                <TextBlock Text="Валюта" Classes="Вторичный" />
+                <TextBox Text="{Binding LocalWeaponCurrency}" Watermark="зм" />
+              </StackPanel>
+            </WrapPanel>
+
+            <Button Content="Создать и выдать" Command="{Binding CreateLocalWeaponCommand}"
+                    Classes="Основная" HorizontalAlignment="Left" />
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
     </StackPanel>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -57,7 +166,7 @@
 
         <TextBlock Classes="Вторичный" TextWrapping="Wrap"
                    IsVisible="{Binding HasNoWeapons}"
-                   Text="У персонажа нет оружия. Нажмите «Выдать оружие». Само оружие — меч, винтовка, жезл или что угодно ещё — создаётся в разделе «Контент»: там задаются кость попадания, формулы урона, масштабирование и боеприпасы." />
+                   Text="У персонажа нет оружия. Выберите оружие из каталога или нажмите «Создать оружие», чтобы задать все характеристики прямо здесь." />
 
         <ItemsControl ItemsSource="{Binding Weapons}">
           <ItemsControl.ItemTemplate>

@@ -8,7 +8,7 @@
              x:Class="RPGCharacterManager.UI.Views.Documents.CharactersView"
              x:DataType="vm:CharactersViewModel">
 
-  <Grid ColumnDefinitions="420,8,*" Margin="24,20,24,20">
+  <Grid ColumnDefinitions="500,8,*" Margin="24,20,24,20">
 
     <!-- ===================== Список персонажей ===================== -->
     <DockPanel Grid.Column="0">
@@ -16,23 +16,28 @@
       <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
         <TextBox Watermark="Поиск по имени" Text="{Binding SearchText}" />
 
-        <StackPanel Orientation="Horizontal" Spacing="6">
+        <WrapPanel Orientation="Horizontal">
           <Button Content="Создать персонажа"
                   Command="{Binding CreateCommand}"
-                  Classes="Основная" />
+                  Classes="Основная"
+                  Margin="0,0,6,6" />
           <Button Content="Открыть лист"
                   Command="{Binding OpenSheetCommand}"
-                  IsEnabled="{Binding HasSelection}" />
+                  IsEnabled="{Binding HasSelection}"
+                  Margin="0,0,6,6" />
           <Button Content="Повысить уровень"
                   Command="{Binding LevelUpCommand}"
-                  IsEnabled="{Binding HasSelection}" />
+                  IsEnabled="{Binding HasSelection}"
+                  Margin="0,0,6,6" />
           <Button Content="Пересчитать"
                   Command="{Binding RecalculateCommand}"
-                  IsEnabled="{Binding HasSelection}" />
+                  IsEnabled="{Binding HasSelection}"
+                  Margin="0,0,6,6" />
           <Button Content="Удалить"
                   Command="{Binding DeleteCommand}"
-                  IsEnabled="{Binding HasSelection}" />
-        </StackPanel>
+                  IsEnabled="{Binding HasSelection}"
+                  Margin="0,0,6,6" />
+        </WrapPanel>
       </StackPanel>
 
       <TextBlock DockPanel.Dock="Bottom"

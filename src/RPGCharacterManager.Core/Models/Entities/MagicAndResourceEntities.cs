@@ -50,6 +50,12 @@ public class CharacterResource : EntityBase
 
     /// <summary>Максимальное значение ресурса. Вычисляется движком.</summary>
     public double Maximum { get; set; }
+
+    /// <summary>
+    /// Авторский максимум ресурса для конкретного персонажа.
+    /// Пустое значение оставляет управление формуле игровой системы.
+    /// </summary>
+    public double? MaximumOverride { get; set; }
 }
 
 /// <summary>

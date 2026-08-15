@@ -167,6 +167,42 @@ public sealed record WeaponReloadResult(
     string? ReloadTime,
     string Description);
 
+/// <summary>Параметры авторского оружия одного персонажа.</summary>
+/// <param name="Name">Название оружия.</param>
+/// <param name="Description">Описание.</param>
+/// <param name="ItemType">Тип предмета.</param>
+/// <param name="Category">Категория оружия.</param>
+/// <param name="Range">Дальность.</param>
+/// <param name="DamageType">Тип урона.</param>
+/// <param name="Properties">Свойства оружия.</param>
+/// <param name="AttackDiceFormula">Формула кости попадания.</param>
+/// <param name="AttackFormula">Формула бонуса попадания.</param>
+/// <param name="DamageFormula">Формула урона.</param>
+/// <param name="CriticalFormula">Формула критического урона.</param>
+/// <param name="CriticalThreshold">Порог критического попадания.</param>
+/// <param name="ScalingAttributeId">Характеристика масштабирования.</param>
+/// <param name="ProficiencySkillId">Навык владения.</param>
+/// <param name="Weight">Вес.</param>
+/// <param name="Price">Стоимость.</param>
+/// <param name="Currency">Валюта стоимости.</param>
+public sealed record LocalWeaponDraft(
+    string Name,
+    string? Description,
+    string? ItemType,
+    string? Category,
+    string? Range,
+    string? DamageType,
+    string? Properties,
+    string? AttackDiceFormula,
+    string? AttackFormula,
+    string? DamageFormula,
+    string? CriticalFormula,
+    int? CriticalThreshold,
+    Guid? ScalingAttributeId,
+    Guid? ProficiencySkillId,
+    double Weight,
+    double Price,
+    string? Currency);
 /// <summary>
 /// Оружие персонажа: вычисление боевых значений, атака, перезарядка.
 ///
@@ -215,6 +251,15 @@ public interface IWeaponService
         Guid itemId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Создаёт авторское оружие только для указанного персонажа и сразу выдаёт его.</summary>
+    /// <param name="characterId">Идентификатор персонажа.</param>
+    /// <param name="draft">Параметры оружия.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <returns>Идентификатор записи инвентаря либо ошибка.</returns>
+    Task<Result<Guid>> CreateLocalAsync(
+        Guid characterId,
+        LocalWeaponDraft draft,
+        CancellationToken cancellationToken = default);
     /// <summary>
     /// Убирает оружие у персонажа.
     /// </summary>
